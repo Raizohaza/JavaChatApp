@@ -12,6 +12,7 @@ repositories {
 dependencies {
     implementation 'com.intellij:forms_rt'
     implementation 'org.xerial:sqlite-jdbc:3.42.0.0'
+    implementation 'org.projectlombok:lombok:1.18.28'
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }
