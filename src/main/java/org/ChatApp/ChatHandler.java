@@ -1,5 +1,9 @@
-import java.io.*;
-import java.net.*;
+package org.ChatApp;
+
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.net.Socket;
 
 public class ChatHandler implements Runnable {
     Socket clientSocket;

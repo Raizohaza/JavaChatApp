@@ -1,3 +1,5 @@
+package org.ChatApp;
+
 import javax.swing.*;
 
 class User {

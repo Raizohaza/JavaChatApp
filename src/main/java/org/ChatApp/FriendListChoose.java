@@ -1,3 +1,5 @@
+package org.ChatApp;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -8,14 +10,17 @@ public class FriendListChoose extends JPanel {
     final Integer height = 600;
     final Integer width = 450;
     User selectedUser;
-    ChatGui.iChangeChat changeChatFunc=null;
+    ChatGui.iChangeChat changeChatFunc = null;
+
     public FriendListChoose() {
         initPanel();
     }
+
     public FriendListChoose(ChatGui.iChangeChat changeChatFunc) {
         this.changeChatFunc = changeChatFunc;
         initPanel();
     }
+
     private void initPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
@@ -44,7 +49,9 @@ public class FriendListChoose extends JPanel {
         list.setAlignmentX(Component.CENTER_ALIGNMENT);
         list.setSelectedIndex(0);
         selectedUser = userList[0];
-        changeChatFunc.changeChat(selectedUser);
+
+        if (changeChatFunc != null)
+            changeChatFunc.changeChat(selectedUser);
 
         JScrollPane sp = new JScrollPane(list);
 //        sp.setViewportView(list);
@@ -52,14 +59,14 @@ public class FriendListChoose extends JPanel {
         JLabel friendLabel = new JLabel("Friend list");
         add(new JLabel(" "));
 
-add(friendLabel);
+        add(friendLabel);
         add(sp);
         list.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
                 selectedUser = list.getSelectedValue();
-                if(changeChatFunc!=null){
+                if (changeChatFunc != null) {
                     changeChatFunc.changeChat(selectedUser);
                 }
             }
