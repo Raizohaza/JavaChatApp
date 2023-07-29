@@ -1,4 +1,4 @@
-package org.ChatApp;
+package org.ChatApp.socket;
 
 import javax.swing.*;
 import java.io.DataInputStream;

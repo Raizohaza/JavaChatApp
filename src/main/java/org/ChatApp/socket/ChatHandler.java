@@ -1,4 +1,6 @@
-package org.ChatApp;
+package org.ChatApp.socket;
+
+import org.ChatApp.socket.Server;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;

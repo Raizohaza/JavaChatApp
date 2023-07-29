@@ -1,9 +1,11 @@
-package org.ChatApp;
+package org.ChatApp.forms;
+
+import org.ChatApp.model.Contact;
 
 import javax.swing.*;
 import java.awt.*;
 
-class UserCellRenderer extends JLabel implements ListCellRenderer<Object> {
+class ContactCellRenderer extends JLabel implements ListCellRenderer<Object> {
 
     public Component getListCellRendererComponent(
             JList<?> list,           // the list
@@ -12,10 +14,8 @@ class UserCellRenderer extends JLabel implements ListCellRenderer<Object> {
             boolean isSelected,      // is the cell selected
             boolean cellHasFocus)    // does the cell have focus
     {
-        User user = (User) value;
-
-
-        setText(user.getUsername());
+        Contact user = (Contact) value;
+        setText(user.getUser_name());
         setIcon(user.getImage());
         setPreferredSize(new Dimension(100,50));
         if (isSelected) {

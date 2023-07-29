@@ -1,9 +1,6 @@
-package org.ChatApp;
+package org.ChatApp.model;
 
-import org.ChatApp.model.Contact;
-import org.ChatApp.model.Conversation;
-import org.ChatApp.model.Message;
-
+import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 import java.util.Date;
 public class ChatDatabase {
@@ -40,8 +37,8 @@ public class ChatDatabase {
             String contact = """
                     CREATE TABLE contact (
                         contact_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        first_name VARCHAR (20) NOT NULL,
-                        last_name VARCHAR (20) NOT NULL,
+                        user_name VARCHAR (20) NOT NULL,
+                        password VARCHAR (20) NOT NULL,
                         profile_photo VARCHAR (255) NULL,
                         phone_number VARCHAR(20) NOT NULL
                     );
@@ -82,7 +79,7 @@ public class ChatDatabase {
     public void initData() {
         String data = """
                 -- Insert sample data for the contact table.
-                INSERT INTO contact (first_name, last_name, phone_number) VALUES
+                INSERT INTO contact (user_name, password, phone_number) VALUES
                   ('John', 'Doe', '+1234567890'),
                   ('Alice', 'Smith', '+9876543210');
                                 
@@ -134,7 +131,7 @@ public class ChatDatabase {
             message1.setMessage_text("Updated message");
             message1.update(connection);
 
-            contact2.setLast_name("Johnson");
+            contact2.setPassword("Johnson");
             contact2.update(connection);
 
             // Retrieve instances by ID
@@ -184,6 +181,8 @@ public class ChatDatabase {
 
         } catch (SQLException e) {
             e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         }
     }
 

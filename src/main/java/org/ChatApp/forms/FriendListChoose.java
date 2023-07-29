@@ -1,4 +1,7 @@
-package org.ChatApp;
+package org.ChatApp.forms;
+
+import lombok.Getter;
+import org.ChatApp.model.Contact;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,7 +12,8 @@ public class FriendListChoose extends JPanel {
     private JPanel panelMain;
     final Integer height = 600;
     final Integer width = 450;
-    User selectedUser;
+    @Getter
+    Contact selectedContact;
     ChatGui.iChangeChat changeChatFunc = null;
 
     public FriendListChoose() {
@@ -24,34 +28,21 @@ public class FriendListChoose extends JPanel {
     private void initPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-        User[] userList = new User[]{
-                new User("Nguyen Van A", "res/user.png"),
-                new User("Pham Thi B", "res/user.png"),
-                new User("Nguyen Van C", "res/user.png"),
-                new User("Nguyen Van D", "res/user.png"),
-                new User("Nguyen Van E", "res/user.png"),
-                new User("Nguyen Van F", "res/user.png"),
-                new User("Nguyen Van G", "res/user.png"),
-                new User("Nguyen Van E", "res/user.png"),
-                new User("Nguyen Van F", "res/user.png"),
-                new User("Nguyen Van G", "res/user.png"),
-                new User("Nguyen Van E", "res/user.png"),
-                new User("Nguyen Van F", "res/user.png"),
-                new User("Nguyen Van G", "res/user.png"),
-                new User("Nguyen Van E", "res/user.png"),
-                new User("Nguyen Van F", "res/user.png"),
-                new User("Nguyen Van G", "res/user.png"),
-
+        Contact[] ContactList = new Contact[]{
+                new Contact(0, "John", "1", "res/Contact.png", "0123456780"),
+                new Contact(0, "John1", "1", "res/Contact.png", "0123456781"),
+                new Contact(0, "John2", "1", "res/Contact.png", "0123456782"),
+                new Contact(0, "John3", "1", "res/Contact.png", "0123456783"),
         };
 
-        JList<User> list = new JList<>(userList);
-        list.setCellRenderer(new UserCellRenderer());
+        JList<Contact> list = new JList<>(ContactList);
+        list.setCellRenderer(new ContactCellRenderer());
         list.setAlignmentX(Component.CENTER_ALIGNMENT);
         list.setSelectedIndex(0);
-        selectedUser = userList[0];
+        selectedContact = ContactList[0];
 
         if (changeChatFunc != null)
-            changeChatFunc.changeChat(selectedUser);
+            changeChatFunc.changeChat(selectedContact);
 
         JScrollPane sp = new JScrollPane(list);
 //        sp.setViewportView(list);
@@ -65,17 +56,13 @@ public class FriendListChoose extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
-                selectedUser = list.getSelectedValue();
+                selectedContact = list.getSelectedValue();
                 if (changeChatFunc != null) {
-                    changeChatFunc.changeChat(selectedUser);
+                    changeChatFunc.changeChat(selectedContact);
                 }
             }
         });
         setPreferredSize(new Dimension(50, height));
-    }
-
-    public User getSelectedUser() {
-        return selectedUser;
     }
 
     public static void main(String[] args) {
