@@ -61,4 +61,7 @@ public class ChatHandler implements Runnable {
     public void sendMessage(String msg){
         System.out.println(clientName + ":" + msg);
     }
+
+    public void close() {
+    }
 }

@@ -33,11 +33,13 @@ public class ChatGui extends JFrame {
     public ChatGui() {
 
         //user info
-        selectedUser = panel1.getSelectedContact();
+
         friendNames = new ArrayList<>();
         friendNames.add("Pham Thi B");
-        textFriendName.setText(selectedUser.getUser_name());
-
+        if( panel1.getSelectedContact().getUser_name() != null ) {
+            selectedUser = panel1.getSelectedContact();
+            textFriendName.setText(selectedUser.getUser_name());
+        }
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setDefaultLookAndFeelDecorated(true);
         setTitle("Chat app");

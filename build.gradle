@@ -1,5 +1,5 @@
 plugins {
-    id 'java'
+    id "java"
 }
 
 group = 'org.ChatApp'
@@ -10,7 +10,13 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.intellij:forms_rt'
+//    implementation 'com.intellij:forms_rt'
+    compileOnly 'org.projectlombok:lombok:1.18.28'
+    annotationProcessor 'org.projectlombok:lombok:1.18.28'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.28'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.28'
+
     implementation 'org.xerial:sqlite-jdbc:3.42.0.0'
     implementation 'org.projectlombok:lombok:1.18.28'
     testImplementation platform('org.junit:junit-bom:5.9.1')
@@ -19,4 +25,10 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'org/ChatApp/forms/ServerUI'
+    }
 }
