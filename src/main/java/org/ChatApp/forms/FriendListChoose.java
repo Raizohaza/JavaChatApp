@@ -14,35 +14,30 @@ public class FriendListChoose extends JPanel {
     final Integer width = 450;
     @Getter
     Contact selectedContact;
-    ChatGui.iChangeChat changeChatFunc = null;
+    ChatGui chatGui;
 
-    public FriendListChoose() {
-        initPanel();
-    }
-
-    public FriendListChoose(ChatGui.iChangeChat changeChatFunc) {
-        this.changeChatFunc = changeChatFunc;
+    public FriendListChoose(ChatGui chatGui) {
+        this.chatGui = chatGui;
         initPanel();
     }
 
     private void initPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-
-        Contact[] ContactList = new Contact[]{
-                new Contact(0, "John", "1", "res/Contact.png", "0123456780"),
-                new Contact(0, "John1", "1", "res/Contact.png", "0123456781"),
-                new Contact(0, "John2", "1", "res/Contact.png", "0123456782"),
-                new Contact(0, "John3", "1", "res/Contact.png", "0123456783"),
-        };
-
-        JList<Contact> list = new JList<>(ContactList);
+//        Contact[] ContactList = new Contact[]{
+//                new Contact(0, "John", "1", "res/Contact.png", "0123456780"),
+//                new Contact(0, "John1", "1", "res/Contact.png", "0123456781"),
+//                new Contact(0, "John2", "1", "res/Contact.png", "0123456782"),
+//                new Contact(0, "John3", "1", "res/Contact.png", "0123456783"),
+//        };
+        Contact[] contacts = chatGui.getContacts().toArray(new Contact[0]);
+        JList<Contact> list = new JList<>(contacts);
         list.setCellRenderer(new ContactCellRenderer());
         list.setAlignmentX(Component.CENTER_ALIGNMENT);
         list.setSelectedIndex(0);
-        selectedContact = ContactList[0];
+        selectedContact = contacts[0];
 
-        if (changeChatFunc != null)
-            changeChatFunc.changeChat(selectedContact);
+        if (chatGui != null)
+            chatGui.changeChat(selectedContact);
 
         JScrollPane sp = new JScrollPane(list);
 //        sp.setViewportView(list);
@@ -57,8 +52,8 @@ public class FriendListChoose extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
                 selectedContact = list.getSelectedValue();
-                if (changeChatFunc != null) {
-                    changeChatFunc.changeChat(selectedContact);
+                if (chatGui != null) {
+                    chatGui.changeChat(selectedContact);
                 }
             }
         });
@@ -68,7 +63,7 @@ public class FriendListChoose extends JPanel {
     public static void main(String[] args) {
         JFrame f = new JFrame();
         f.setSize(600, 450);
-        f.add(new FriendListChoose());
+        f.add(new FriendListChoose(null));
         f.setVisible(true);
     }
 }

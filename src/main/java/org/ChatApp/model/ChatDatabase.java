@@ -1,8 +1,7 @@
 package org.ChatApp.model;
 
-import java.security.NoSuchAlgorithmException;
 import java.sql.*;
-import java.util.Date;
+
 public class ChatDatabase {
 
     private Connection connection = null;
@@ -40,7 +39,7 @@ public class ChatDatabase {
                         user_name VARCHAR (20) NOT NULL,
                         password VARCHAR (20) NOT NULL,
                         profile_photo VARCHAR (255) NULL,
-                        phone_number VARCHAR(20) NOT NULL
+                        phone_number VARCHAR(20) NOT NULL UNIQUE
                     );
                     """;
             String conversation = """
@@ -110,81 +109,81 @@ public class ChatDatabase {
         }
     }
 
-    public void exampleUsage(){
-        String url = "jdbc:sqlite:users.db"; // Replace with your database path
-        try (Connection connection = DriverManager.getConnection(url)) {
-            // Create instances of the classes
-            Message message1 = new Message(0, "123456789", "Hello!", new Date(), 1);
-            Message message2 = new Message(0, "987654321", "Hi there!", new Date(), 1);
-            Contact contact1 = new Contact(0, "John", "Doe", null, "123456789");
-            Contact contact2 = new Contact(0, "Jane", "Smith", null, "987654321");
-            Conversation conversation = new Conversation(0, "Sample Conversation");
-
-            // Save the instances to the database
-            message1.save(connection);
-            message2.save(connection);
-            contact1.save(connection);
-            contact2.save(connection);
-            conversation.save(connection);
-
-            // Update the instances and save changes to the database
-            message1.setMessage_text("Updated message");
-            message1.update(connection);
-
-            contact2.setPassword("Johnson");
-            contact2.update(connection);
-
-            // Retrieve instances by ID
-            Message retrievedMessage = Message.getById(connection, message1.getMessage_id());
-            Contact retrievedContact = Contact.getById(connection, contact2.getContact_id());
-            Conversation retrievedConversation = Conversation.getById(connection, conversation.getConversation_id());
-
-            System.out.println("Retrieved Message: " + retrievedMessage);
-            System.out.println("Retrieved Contact: " + retrievedContact);
-            System.out.println("Retrieved Conversation: " + retrievedConversation);
-
-            // Retrieve all instances from the database
-            System.out.println("All Messages:");
-            for (Message message : Message.getAll(connection)) {
-                System.out.println(message);
-            }
-
-            System.out.println("All Contacts:");
-            for (Contact contact : Contact.getAll(connection)) {
-                System.out.println(contact);
-            }
-
-            System.out.println("All Conversations:");
-            for (Conversation conv : Conversation.getAll(connection)) {
-                System.out.println(conv);
-            }
-
-            // Delete instances from the database
-            message2.delete(connection);
-            contact1.delete(connection);
-
-            // Retrieve all instances from the database after deletions
-            System.out.println("All Messages after deletions:");
-            for (Message message : Message.getAll(connection)) {
-                System.out.println(message);
-            }
-
-            System.out.println("All Contacts after deletions:");
-            for (Contact contact : Contact.getAll(connection)) {
-                System.out.println(contact);
-            }
-
-            System.out.println("All Conversations after deletions:");
-            for (Conversation conv : Conversation.getAll(connection)) {
-                System.out.println(conv);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-    }
+//    public void exampleUsage(){
+//        String url = "jdbc:sqlite:users.db"; // Replace with your database path
+//        try (Connection connection = DriverManager.getConnection(url)) {
+//            // Create instances of the classes
+//            Message message1 = new Message(0, "123456789", "Hello!", new Date(), 1);
+//            Message message2 = new Message(0, "987654321", "Hi there!", new Date(), 1);
+//            Contact contact1 = new Contact(0, "John", "Doe", null, "123456789");
+//            Contact contact2 = new Contact(0, "Jane", "Smith", null, "987654321");
+//            Conversation conversation = new Conversation(0, "Sample Conversation");
+//
+//            // Save the instances to the database
+//            message1.save(connection);
+//            message2.save(connection);
+//            contact1.save(connection);
+//            contact2.save(connection);
+//            conversation.save(connection);
+//
+//            // Update the instances and save changes to the database
+//            message1.setMessage_text("Updated message");
+//            message1.update(connection);
+//
+//            contact2.setPassword("Johnson");
+//            contact2.update(connection);
+//
+//            // Retrieve instances by ID
+//            Message retrievedMessage = Message.getById(connection, message1.getMessage_id());
+//            Contact retrievedContact = Contact.getById(connection, contact2.getContact_id());
+//            Conversation retrievedConversation = Conversation.getById(connection, conversation.getConversation_id());
+//
+//            System.out.println("Retrieved Message: " + retrievedMessage);
+//            System.out.println("Retrieved Contact: " + retrievedContact);
+//            System.out.println("Retrieved Conversation: " + retrievedConversation);
+//
+//            // Retrieve all instances from the database
+//            System.out.println("All Messages:");
+//            for (Message message : Message.getAll(connection)) {
+//                System.out.println(message);
+//            }
+//
+//            System.out.println("All Contacts:");
+//            for (Contact contact : Contact.getAll(connection)) {
+//                System.out.println(contact);
+//            }
+//
+//            System.out.println("All Conversations:");
+//            for (Conversation conv : Conversation.getAll(connection)) {
+//                System.out.println(conv);
+//            }
+//
+//            // Delete instances from the database
+//            message2.delete(connection);
+//            contact1.delete(connection);
+//
+//            // Retrieve all instances from the database after deletions
+//            System.out.println("All Messages after deletions:");
+//            for (Message message : Message.getAll(connection)) {
+//                System.out.println(message);
+//            }
+//
+//            System.out.println("All Contacts after deletions:");
+//            for (Contact contact : Contact.getAll(connection)) {
+//                System.out.println(contact);
+//            }
+//
+//            System.out.println("All Conversations after deletions:");
+//            for (Conversation conv : Conversation.getAll(connection)) {
+//                System.out.println(conv);
+//            }
+//
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        } catch (NoSuchAlgorithmException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     public void printAllMessages() throws SQLException {
         String sql = "SELECT * FROM chat_messages";
@@ -202,9 +201,9 @@ public class ChatDatabase {
 
     public static void main(String[] args) {
         String databasePath = "user.db";
-        ChatDatabase chatDatabase = new ChatDatabase(databasePath);
+        new ChatDatabase(databasePath);
 //        chatDatabase.initData();
-        chatDatabase.exampleUsage();
+//        chatDatabase.exampleUsage();
 
     }
 }

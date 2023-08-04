@@ -7,8 +7,8 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 public class ClientHandler implements Runnable {
-    private Socket clientSocket;
-    private ChatServer chatServer;
+    private final Socket clientSocket;
+    private final ChatServer chatServer;
     private BufferedReader in;
     private PrintWriter out;
     private String username;

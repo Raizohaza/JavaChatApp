@@ -1,5 +1,16 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
+    }
+}
+
 plugins {
     id "java"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = 'org.ChatApp'
@@ -10,10 +21,10 @@ repositories {
 }
 
 dependencies {
-//    implementation 'com.intellij:forms_rt'
+    implementation 'org.xerial:sqlite-jdbc:3.42.0.0'
+
     compileOnly 'org.projectlombok:lombok:1.18.28'
     annotationProcessor 'org.projectlombok:lombok:1.18.28'
-
     testCompileOnly 'org.projectlombok:lombok:1.18.28'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.28'
 
@@ -29,6 +40,19 @@ test {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'org/ChatApp/forms/ServerUI'
+        attributes 'Main-Class': 'org.ChatApp.forms.ClientUI'
     }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+tasks.register('ServerJar', Jar) {
+    manifest {
+        attributes 'Main-Class': 'org.ChatApp.forms.ServerUI'
+    }
+    archiveFileName.set("ServerJar.jar")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }

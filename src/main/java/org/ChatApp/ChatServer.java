@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChatServer {
-    private List<ClientHandler> clients = new ArrayList<>();
+    private final List<ClientHandler> clients = new ArrayList<>();
 
     public static void main(String[] args) {
         new ChatServer().startServer();

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
@@ -12,16 +13,16 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Message {
+public class Message implements Serializable {
     private int message_id;
     private String from_number;
     private String message_text;
     private Date sent;
     private int conversation_id;
-
+    public static Connection connection;
     // Other methods and constructors
 
-    public void save(Connection connection) throws SQLException {
+    public void save() throws SQLException {
         String sql = "INSERT INTO message (from_number, message_text, sent, conversation_id) VALUES (?, ?, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, from_number);

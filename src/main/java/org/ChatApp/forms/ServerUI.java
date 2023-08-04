@@ -12,14 +12,15 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.SQLException;
 
 public class ServerUI {
-    private JFrame frame;
-    private JTextField ipAddressField;
-    private JTextField portField;
-    private JButton startButton;
-    private JButton stopButton;
-    private JTextPane logTextPane;
+    private final JFrame frame;
+    private final JTextField ipAddressField;
+    private final JTextField portField;
+    private final JButton startButton;
+    private final JButton stopButton;
+    private final JTextPane logTextPane;
     public Server server;
 
     public ServerUI() {
@@ -91,8 +92,7 @@ public class ServerUI {
 
         stopButton.addActionListener((ActionEvent e) -> {
             stopServer();
-            startButton.setEnabled(true);
-            stopButton.setEnabled(false);
+
         });
 
         // Disable the Stop button initially
@@ -118,8 +118,12 @@ public class ServerUI {
             try {
                 new Server(port, this);
                 logMessage("Server started on " + ipAddress + ":" + port);
-            } catch (IOException e) {
-                logMessage("Error starting server: " + e.getMessage());
+            } catch (ClassNotFoundException | SQLException | IOException e) {
+               e.printStackTrace();
+            } finally {
+                server.stop();
+                startButton.setEnabled(true);
+                stopButton.setEnabled(false);
             }
         });
         tServer.start();
@@ -131,6 +135,8 @@ public class ServerUI {
         if (server != null) {
             server.stop();
             logMessage("Server stopped");
+            startButton.setEnabled(true);
+            stopButton.setEnabled(false);
         }
     }
 
@@ -139,7 +145,7 @@ public class ServerUI {
     }
 
     private class TextAreaOutputStream extends OutputStream {
-        private JTextPane textPane;
+        private final JTextPane textPane;
 
         public TextAreaOutputStream(JTextPane textPane) {
             this.textPane = textPane;

@@ -1,6 +1,9 @@
 package org.ChatApp.forms;
 
 import org.ChatApp.model.Contact;
+import org.ChatApp.model.RequestType;
+import org.ChatApp.model.Response;
+import org.ChatApp.socket.Client;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -10,6 +13,8 @@ import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,25 +29,28 @@ public class ChatGui extends JFrame {
     final Integer height = 600;
     final Integer width = 600;
     Contact selectedUser;
-    Contact cUser;
+    Contact contact;
     List<String> friendNames;
     private final List<String> conversationList;
-    iChangeChat iChangeChat = this::changeChat;
-    FriendListChoose panel1  = new FriendListChoose(iChangeChat);
+    FriendListChoose panel1;
+    Client client;
 
-    public ChatGui() {
-
+    public ChatGui(Client client, Contact contact) {
+        this.client = client;
+        this.contact = contact;
         //user info
-
         friendNames = new ArrayList<>();
+        panel1 = new FriendListChoose(this);
+
         friendNames.add("Pham Thi B");
-        if( panel1.getSelectedContact().getUser_name() != null ) {
+        if (panel1.getSelectedContact().getUser_name() != null) {
             selectedUser = panel1.getSelectedContact();
             textFriendName.setText(selectedUser.getUser_name());
         }
+
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setDefaultLookAndFeelDecorated(true);
-        setTitle("Chat app");
+        setTitle("Chat app: " + contact.getUser_name());
         conversationList = new ArrayList<>();
 
         btnSend.addMouseListener(new MouseAdapter() {
@@ -86,6 +94,14 @@ public class ChatGui extends JFrame {
         add(panelMain, gbc);
 
         setSize(width, height);
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                super.windowClosing(e);
+                client.close();
+            }
+        });
         setVisible(true);
     }
 
@@ -103,17 +119,18 @@ public class ChatGui extends JFrame {
         }
     }
 
-    public interface iChangeChat {
-        void changeChat(Contact selectedUser);
-    }
 
     public void changeChat(Contact selectedUser) {
         System.out.println("selectedUser" + selectedUser);
-
         this.textFriendName.setText(selectedUser.getUser_name());
     }
 
-    public static void main(String[] args) {
-        EventQueue.invokeLater(ChatGui::new);
+    @SuppressWarnings("unchecked")
+    public List<Contact> getContacts() {
+        Response response = client.sendRequest(RequestType.GET_CONTACTS, null);
+        if (response.getData() != null)
+            return (List<Contact>) response.getData();
+        return null;
     }
 }
+

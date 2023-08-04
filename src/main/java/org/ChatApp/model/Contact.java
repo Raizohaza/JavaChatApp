@@ -21,8 +21,9 @@ public class Contact implements Serializable {
     private String password;
     private String profile_photo;
     private String phone_number;
+    public static Connection connection;
 
-    public void save(Connection connection) throws SQLException, NoSuchAlgorithmException {
+    public void save() throws SQLException, NoSuchAlgorithmException {
         // Hash the password before saving
         String hashedPassword = hashPassword(password);
 
@@ -42,7 +43,20 @@ public class Contact implements Serializable {
         }
     }
 
-    public static Contact getById(Connection connection, int contactId) throws SQLException {
+    public static Contact getByPhoneNumber(String phoneNumber) throws SQLException {
+        String sql = "SELECT * FROM contact WHERE phone_number = ?";
+
+        PreparedStatement statement = connection.prepareStatement(sql);
+        statement.setString(1, phoneNumber);
+        ResultSet resultSet = statement.executeQuery();
+        if (resultSet.next()) {
+            return extractContactFromResultSet(resultSet);
+        }
+
+        return null;
+    }
+
+    public static Contact getById(int contactId) throws SQLException {
         String sql = "SELECT * FROM contact WHERE contact_id = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, contactId);
@@ -55,15 +69,15 @@ public class Contact implements Serializable {
         return null;
     }
 
-    public static List<Contact> getAll(Connection connection) throws SQLException {
+    public static List<Contact> getAll() throws SQLException {
         List<Contact> contacts = new ArrayList<>();
         String sql = "SELECT * FROM contact";
-        try (Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
-            while (resultSet.next()) {
-                contacts.add(extractContactFromResultSet(resultSet));
-            }
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(sql);
+        while (resultSet.next()) {
+            contacts.add(extractContactFromResultSet(resultSet));
         }
+
         return contacts;
     }
 
@@ -71,7 +85,7 @@ public class Contact implements Serializable {
         return new ImageIcon(profile_photo);
     }
 
-    public void update(Connection connection) throws SQLException, NoSuchAlgorithmException {
+    public void update() throws SQLException, NoSuchAlgorithmException {
         // Hash the password before updating
         String hashedPassword = hashPassword(password);
 
@@ -87,12 +101,12 @@ public class Contact implements Serializable {
     }
 
     // New login method
-    public static Contact login(Connection connection, String username, String password) throws SQLException, NoSuchAlgorithmException {
+    public Contact login() throws SQLException, NoSuchAlgorithmException {
         String hashedPassword = hashPassword(password);
 
         String sql = "SELECT * FROM contact WHERE user_name = ? AND password = ?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, username);
+            statement.setString(1, user_name);
             statement.setString(2, hashedPassword);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
@@ -103,7 +117,7 @@ public class Contact implements Serializable {
         return null;
     }
 
-    public void delete(Connection connection) throws SQLException {
+    public void delete() throws SQLException {
         String sql = "DELETE FROM contact WHERE contact_id=?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, contact_id);
@@ -111,7 +125,7 @@ public class Contact implements Serializable {
         }
     }
 
-    private static String hashPassword(String password) throws NoSuchAlgorithmException {
+    private String hashPassword(String password) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         byte[] hashedBytes = md.digest(password.getBytes());
 
@@ -126,7 +140,7 @@ public class Contact implements Serializable {
     private static Contact extractContactFromResultSet(ResultSet resultSet) throws SQLException {
         int contactId = resultSet.getInt("contact_id");
         String userName = resultSet.getString("user_name");
-        String password = resultSet.getString("password");
+        String password = "";//resultSet.getString("password");
         String profilePhoto = resultSet.getString("profile_photo");
         String phoneNumber = resultSet.getString("phone_number");
         return new Contact(contactId, userName, password, profilePhoto, phoneNumber);

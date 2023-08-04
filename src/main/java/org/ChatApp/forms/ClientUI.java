@@ -1,23 +1,24 @@
 package org.ChatApp.forms;
 
 import org.ChatApp.model.Contact;
+import org.ChatApp.model.RequestType;
+import org.ChatApp.model.Response;
+import org.ChatApp.model.ResponseType;
+import org.ChatApp.socket.Client;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
 
 public class ClientUI {
-    private JFrame frame;
-    private JTextField ipAddressField;
-    private JTextField portField;
-    private JTextField userNameField;
-    private JPasswordField passwordField;
-    private JTextField phoneNumberField;
-    private JRadioButton loginRadio;
-    private JRadioButton registerRadio;
-    private JButton startButton;
+    private final JFrame frame;
+    private final JTextField ipAddressField;
+    private final JTextField portField;
+    private final JTextField userNameField;
+    private final JPasswordField passwordField;
+    private final JTextField phoneNumberField;
+    private final JRadioButton loginRadio;
+    private final JRadioButton registerRadio;
+    Client client = null;
 
     public ClientUI() {
         frame = new JFrame("Chat App");
@@ -28,14 +29,14 @@ public class ClientUI {
         // Initialize components
         ipAddressField = new JTextField("127.0.0.1");
         portField = new JTextField("1234");
-        userNameField = new JTextField("a");
-        passwordField = new JPasswordField("1");
+        userNameField = new JTextField("aa");
+        passwordField = new JPasswordField("bb");
         phoneNumberField = new JTextField("123456789");
         loginRadio = new JRadioButton("Login");
         registerRadio = new JRadioButton("Register");
-        startButton = new JButton("Start");
+        JButton startButton = new JButton("Start");
 
-        registerRadio.setSelected(true);
+        loginRadio.setSelected(true);
 
         // Create a button group for radio buttons
         ButtonGroup buttonGroup = new ButtonGroup();
@@ -60,11 +61,9 @@ public class ClientUI {
         frame.add(new JLabel()); // Empty label for spacing
         frame.add(startButton);
 
-        // Add action listener for the Start button
         startButton.addActionListener(e -> {
-            // Validate input fields
             if (!validateFields()) {
-                JOptionPane.showMessageDialog(frame, "Please fill in all required fields.");
+                showDialog("Please fill in all required fields.");
                 return;
             }
 
@@ -76,10 +75,18 @@ public class ClientUI {
             boolean isLogin = loginRadio.isSelected();
 
             Contact contact = new Contact(0, username, password, null, phoneNumber);
-            try {
-                sendDataOverSocket(contact);
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(frame, ex.getMessage());
+            RequestType type = isLogin ? RequestType.LOGIN : RequestType.REGISTER;
+            client = new Client(ipAddress, port);
+            Response response = client.sendRequest(type, contact);
+            if (ResponseType.SUCCESS.equals(response.getType())) {
+                showDialog(response.getMessage());
+                frame.setVisible(false);
+                new ChatGui(client, (Contact) response.getData());
+
+                frame.dispose();
+
+            } else {
+                showDialog(response.getMessage());
             }
         });
 
@@ -87,19 +94,8 @@ public class ClientUI {
         frame.setVisible(true);
     }
 
-    private void sendDataOverSocket(Contact contact) throws IOException {
-        String serverIP = ipAddressField.getText();
-        int serverPort = Integer.parseInt(portField.getText());
-
-        Socket socket = new Socket(serverIP, serverPort);
-        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-
-        // Write the Contact object to the output stream
-        outputStream.writeObject(contact);
-
-        // You can add more logic here based on your application requirements
-        // For example, you can wait for a response from the server
-
+    private void showDialog(String msg) {
+        JOptionPane.showMessageDialog(frame, msg);
     }
 
     private boolean validateFields() {
@@ -112,11 +108,6 @@ public class ClientUI {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new ClientUI();
-            }
-        });
+        SwingUtilities.invokeLater(ClientUI::new);
     }
 }
