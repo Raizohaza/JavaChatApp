@@ -44,7 +44,7 @@ public class ChatHandler implements Runnable {
         }
     }
 
-    private void processRequest(Request request) {
+    private void processRequest(Request request) throws IOException {
         RequestType type = request.getType();
         Object data = request.getData();
 
@@ -53,13 +53,68 @@ public class ChatHandler implements Runnable {
                 case LOGIN -> handleLogin((Contact) data);
                 case REGISTER -> handleRegistration((Contact) data);
                 case GET_CONTACTS -> handleGetContacts();
-                case SEND_MESSAGE -> handleSendMessage((Message) data);
+                case CREATE_CONVERSATION -> {
+                    CreateConversationData conversationData = (CreateConversationData) data;
+                    Contact fromContact = Contact.getByPhoneNumber(conversationData.getFrom_number());
+                    Contact toContact = Contact.getByPhoneNumber(conversationData.getTo_number());
+
+                    if (fromContact != null && toContact != null) {
+                        createConversation(fromContact, toContact);
+                    } else {
+                        outputStream.writeObject(new Response(ResponseType.FAILURE, "Invalid contacts", null));
+                    }
+                }
+
+                case GET_MESSAGE_HISTORY -> {
+                    System.out.println(data);
+                    Integer consersationId = (Integer) data;
+
+                    if (consersationId != 0) {
+                        getMessageHistory(consersationId);
+                    } else {
+                        outputStream.writeObject(new Response(ResponseType.FAILURE, "Invalid contacts", null));
+                    }
+                }
+
+                case SEND_MESSAGE -> {
+                    Message message = (Message) data;
+                    Contact contact = Contact.getByPhoneNumber(message.getFrom_number());
+                    if (contact != null) {
+                        handleMessage(message);
+                        return;
+                    }
+                    outputStream.writeObject(new Response(ResponseType.FAILURE, "No contacts", null));
+                }
+
 
                 case LOGOUT -> handleLogout();
                 default -> System.out.println("Unknown request type: " + type);
             }
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            outputStream.flush();
+        }
+    }
+
+    private void handleMessage(Message message) throws SQLException, IOException {
+        int status = message.save();
+        System.out.println(status);
+        if (status == 1) {
+//            server.broadcastMessage(message);
+            outputStream.writeObject(new Response(ResponseType.SUCCESS, "Message history retrieved successfully.", message));
+        } else {
+            outputStream.writeObject(new Response(ResponseType.FAILURE, "No messages found.", null));
+        }
+    }
+
+    private void getMessageHistory(Integer conversationId) throws IOException, SQLException {
+        List<Message> messages = Message.getByConversationId(conversationId);
+        System.out.println(messages.size());
+        if (!messages.isEmpty()) {
+            outputStream.writeObject(new Response(ResponseType.SUCCESS, "Message history retrieved successfully.", messages));
+        } else {
+            outputStream.writeObject(new Response(ResponseType.FAILURE, "No messages found.", null));
         }
     }
 
@@ -67,32 +122,53 @@ public class ChatHandler implements Runnable {
         List<Contact> contacts = Contact.getAll();
         if (!contacts.isEmpty()) {
             outputStream.writeObject(new Response(ResponseType.SUCCESS, "Get contacts successful.", contacts));
+            return;
+        }
+        outputStream.writeObject(new Response(ResponseType.FAILURE, "No contacts", null));
+    }
+
+    private void createConversation(Contact fromContact, Contact toContact) throws SQLException, IOException {
+        Conversation existingConversation = Conversation.getChatConversation(fromContact, toContact);
+        System.out.println(existingConversation);
+        if (existingConversation != null) {
+            // Only create a message
+//            Message message = new Message();
+//            message.setFrom_number(fromContact.getPhone_number());
+//            message.setMessage_text("This is a test message.");
+//            message.setSent(new Date());
+//
+//            message.setConversation_id(existingConversation.getConversation_id());
+//            message.save();
+            Response response = new Response(ResponseType.SUCCESS, "Message sent successfully.", existingConversation.getConversation_id());
+            outputStream.writeObject(response);
         } else {
-            outputStream.writeObject(new Response(ResponseType.FAILURE, "No contacts", null));
+            // Create a new conversation, group members, and message
+            Conversation newConversation = new Conversation();
+            newConversation.setConversation_name(String.valueOf(System.currentTimeMillis()));
+            newConversation.save();
+
+            GroupMember groupMember1 = new GroupMember(fromContact.getContact_id(), newConversation.getConversation_id(), new Date(), null);
+            groupMember1.save();
+
+            GroupMember groupMember2 = new GroupMember(toContact.getContact_id(), newConversation.getConversation_id(), new Date(), null);
+            groupMember2.save();
+
+//            Message message = new Message();
+//            message.setFrom_number(fromContact.getPhone_number());
+//            message.setMessage_text("This is a test message.");
+//            message.setSent(new Date());
+//
+//            message.setConversation_id(newConversation.getConversation_id());
+//            message.save();
+
+            Response response = new Response(ResponseType.SUCCESS, "Conversation created and message sent successfully.", newConversation.getConversation_id());
+            outputStream.writeObject(response);
         }
     }
 
-
-    private void handleSendMessage(Message data) throws IOException {
-        try {
-            // Extract the necessary information from the messageRequest
-            String fromNumber = data.getFrom_number();
-            String messageText = data.getMessage_text();
-            int conversationId = data.getConversation_id();
-
-            Message newMessage = new Message(0, fromNumber, messageText, new Date(), conversationId);
-            newMessage.save();
-
-            // Send apprpriate response indicating success
-            Response response = new Response(ResponseType.SUCCESS, "Message sent successfully.", null);
-            outputStream.writeObject(response);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            Response response = new Response(ResponseType.FAILURE, "Error sending message.", null);
-            outputStream.writeObject(response);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void sendGroupMessage(Message message, Contact contact) {
+        // Implement sending a group message
+        // This logic depends on how you handle group conversations
     }
 
     private void handleLogin(Contact contact) throws IOException, SQLException, NoSuchAlgorithmException {
@@ -128,8 +204,12 @@ public class ChatHandler implements Runnable {
         close();
     }
 
-    public void sendMessage(String msg) {
-        System.out.println(clientInfo.getUser_name() + ": " + msg);
+    public void sendMessage(Message message) {
+        try {
+            outputStream.writeObject(new Response(ResponseType.SUCCESS, "New message received.", message));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void close() {

@@ -20,68 +20,76 @@ public class Message implements Serializable {
     private Date sent;
     private int conversation_id;
     public static Connection connection;
-    // Other methods and constructors
 
-    public void save() throws SQLException {
-        String sql = "INSERT INTO message (from_number, message_text, sent, conversation_id) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            statement.setString(1, from_number);
-            statement.setString(2, message_text);
-            statement.setDate(3, new java.sql.Date(sent.getTime()));
-            statement.setInt(4, conversation_id);
-            statement.executeUpdate();
-
-            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    this.message_id = generatedKeys.getInt(1);
-                }
-            }
+    public static List<Message> getByConversationId(int conversationId) throws SQLException {
+        List<Message> messages = new ArrayList<>();
+        String sql = "SELECT * FROM message WHERE conversation_id = ?";
+        PreparedStatement statement = connection.prepareStatement(sql);
+        statement.setInt(1, conversationId);
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            messages.add(extractMessageFromResultSet(resultSet));
         }
+
+
+        return messages;
     }
 
-    public static Message getById(Connection connection, int messageId) throws SQLException {
+    public int save() throws SQLException {
+        String sql = "INSERT INTO message (from_number, message_text, sent, conversation_id) VALUES (?, ?, ?, ?)";
+        PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+        statement.setString(1, from_number);
+        statement.setString(2, message_text);
+        statement.setDate(3, new java.sql.Date(sent.getTime()));
+        statement.setInt(4, conversation_id);
+        int status = statement.executeUpdate();
+
+        ResultSet generatedKeys = statement.getGeneratedKeys();
+        if (generatedKeys.next()) {
+            this.message_id = generatedKeys.getInt(1);
+
+        }
+        return status;
+    }
+
+    public static Message getById(int messageId) throws SQLException {
         String sql = "SELECT * FROM message WHERE message_id = ?";
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, messageId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return extractMessageFromResultSet(resultSet);
-                }
-            }
+        PreparedStatement statement = connection.prepareStatement(sql);
+        statement.setInt(1, messageId);
+        ResultSet resultSet = statement.executeQuery();
+        if (resultSet.next()) {
+            return extractMessageFromResultSet(resultSet);
         }
         return null;
     }
 
-    public static List<Message> getAll(Connection connection) throws SQLException {
+    public static List<Message> getAll() throws SQLException {
         List<Message> messages = new ArrayList<>();
         String sql = "SELECT * FROM message";
-        try (Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
-            while (resultSet.next()) {
-                messages.add(extractMessageFromResultSet(resultSet));
-            }
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(sql);
+        while (resultSet.next()) {
+            messages.add(extractMessageFromResultSet(resultSet));
         }
         return messages;
     }
 
-    public void update(Connection connection) throws SQLException {
+    public void update() throws SQLException {
         String sql = "UPDATE message SET from_number=?, message_text=?, sent=?, conversation_id=? WHERE message_id=?";
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, from_number);
-            statement.setString(2, message_text);
-            statement.setDate(3, new java.sql.Date(sent.getTime()));
-            statement.setInt(4, conversation_id);
-            statement.setInt(5, message_id);
-            statement.executeUpdate();
-        }
+        PreparedStatement statement = connection.prepareStatement(sql);
+        statement.setString(1, from_number);
+        statement.setString(2, message_text);
+        statement.setDate(3, new java.sql.Date(sent.getTime()));
+        statement.setInt(4, conversation_id);
+        statement.setInt(5, message_id);
+        statement.executeUpdate();
     }
 
-    public void delete(Connection connection) throws SQLException {
+    public void delete() throws SQLException {
         String sql = "DELETE FROM message WHERE message_id=?";
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, message_id);
-            statement.executeUpdate();
-        }
+        PreparedStatement statement = connection.prepareStatement(sql);
+        statement.setInt(1, message_id);
+        statement.executeUpdate();
     }
 
     private static Message extractMessageFromResultSet(ResultSet resultSet) throws SQLException {

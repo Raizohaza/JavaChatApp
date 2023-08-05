@@ -4,27 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e40a0567-78bc-485b-8ea6-d15a8fa2fdd2" name="Changes" comment="update Request Response + fat jar">
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/Request.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/RequestType.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/Response.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/ResponseType.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="e40a0567-78bc-485b-8ea6-d15a8fa2fdd2" name="Changes" comment="done:&#10;- contact login/register&#10;- Allow to chat multiple">
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/CreateConversationData.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/ChatServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/ChatServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/ClientHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/ClientHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/forms/ChatGui.form" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/forms/ChatGui.form" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/forms/ChatGui.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/forms/ChatGui.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/forms/ClientUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/forms/ClientUI.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/forms/FriendListChoose.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/forms/FriendListChoose.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/forms/ServerUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/forms/ServerUI.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/ChatDatabase.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/ChatDatabase.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/Contact.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/Contact.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/Conversation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/Conversation.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/GroupMember.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/GroupMember.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/Message.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/Message.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/ResponseType.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/model/ResponseType.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/socket/ChatHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/socket/ChatHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/socket/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/socket/Client.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/ChatApp/socket/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ChatApp/socket/Server.java" afterDir="false" />
@@ -58,8 +48,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Class" />
         <option value="Interface" />
+        <option value="Class" />
       </list>
     </option>
   </component>
@@ -97,36 +87,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_ADD_EXTERNAL_FILES": "true",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "deletionFromPopupRequiresConfirmation": "false",
-    "git-widget-placeholder": "master",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Users/raizo/IdeaProjects/java-socket-chat",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Libraries",
-    "project.structure.proportion": "0.15",
-    "project.structure.side.proportion": "0.2",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "MavenSettings",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;deletionFromPopupRequiresConfirmation&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/raizo/IdeaProjects/java-socket-chat&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Libraries&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;MavenSettings&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "sqlite"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;sqlite&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
+    <key name="CreateClassDialog.RecentsKey">
+      <recent name="org.ChatApp.socket" />
+      <recent name="org.ChatApp.model" />
+    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\raizo\ChatAppGradle\src\main\java\org\ChatApp" />
       <recent name="C:\Users\raizo\ChatAppGradle\.gradle" />
@@ -137,32 +131,6 @@
     </key>
   </component>
   <component name="RunManager" selected="Compound.Unnamed">
-    <configuration name="ChatDatabase" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="org.ChatApp.model.ChatDatabase" />
-      <module name="ChatAppGradle.main" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="org.ChatApp.model.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Client" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="org.ChatApp.socket.Client" />
-      <module name="ChatAppGradle.main" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="org.ChatApp.socket.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="ClientUI" type="Application" factoryName="Application">
       <option name="ALTERNATIVE_JRE_PATH" value="corretto-17" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
@@ -192,6 +160,7 @@
     </configuration>
     <configuration name="Unnamed" type="CompoundRunConfigurationType">
       <toRun name="ClientUI" type="Application" />
+      <toRun name="ClientUI2" type="Application" />
       <toRun name="ServerUI" type="Application" />
       <method v="2" />
     </configuration>
@@ -243,17 +212,13 @@
       <item itemvalue="Application.ServerUI" />
       <item itemvalue="Application.ClientUI" />
       <item itemvalue="Application.ClientUI2" />
-      <item itemvalue="Application.ChatDatabase" />
-      <item itemvalue="Application.Client" />
       <item itemvalue="Compound.Unnamed" />
       <item itemvalue="Gradle.JavaChatApp [buildNeeded]" />
       <item itemvalue="Gradle.JavaChatApp [build]" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.ChatDatabase" />
         <item itemvalue="Gradle.JavaChatApp [build]" />
-        <item itemvalue="Application.Client" />
         <item itemvalue="Gradle.JavaChatApp [buildNeeded]" />
       </list>
     </recent_temporary>
@@ -272,7 +237,9 @@
       <workItem from="1690619927619" duration="861000" />
       <workItem from="1691057138133" duration="4920000" />
       <workItem from="1691132191258" duration="12833000" />
-      <workItem from="1691146666177" duration="23636000" />
+      <workItem from="1691146666177" duration="35308000" />
+      <workItem from="1691211154168" duration="14300000" />
+      <workItem from="1691229394646" duration="567000" />
     </task>
     <task id="LOCAL-00001" summary="convert to gradle">
       <option name="closed" value="true" />
@@ -290,7 +257,15 @@
       <option name="project" value="LOCAL" />
       <updated>1691146320034</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="update Request Response + fat jar">
+      <option name="closed" value="true" />
+      <created>1691171248336</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1691171248337</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -302,6 +277,7 @@
     <MESSAGE value="divide into packages" />
     <MESSAGE value="add UI for server and client + jar script" />
     <MESSAGE value="update Request Response + fat jar" />
-    <option name="LAST_COMMIT_MESSAGE" value="update Request Response + fat jar" />
+    <MESSAGE value="done:&#10;- contact login/register&#10;- Allow to chat multiple" />
+    <option name="LAST_COMMIT_MESSAGE" value="done:&#10;- contact login/register&#10;- Allow to chat multiple" />
   </component>
 </project>

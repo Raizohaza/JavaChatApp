@@ -79,7 +79,7 @@ public class ClientUI {
             client = new Client(ipAddress, port);
             Response response = client.sendRequest(type, contact);
             if (ResponseType.SUCCESS.equals(response.getType())) {
-                showDialog(response.getMessage());
+//                showDialog(response.getMessage());
                 frame.setVisible(false);
                 new ChatGui(client, (Contact) response.getData());
 

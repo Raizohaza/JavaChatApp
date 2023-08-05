@@ -30,11 +30,19 @@ public class Client extends JFrame {
     public Response sendRequest(RequestType type, Object data) {
         try {
             outputStream.writeObject(new Request(type, data));
+            return receiveResponse();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new Response(ResponseType.FAILURE, "Request failed.", null);
+    }
+    public Response receiveResponse() {
+        try {
             return (Response) inputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
-        return new Response(ResponseType.FAILURE, "Request failed.", null);
+        return new Response(ResponseType.FAILURE, "Response receive failed.", null);
     }
 
     public void close() {
@@ -52,6 +60,7 @@ public class Client extends JFrame {
             }
         }
     }
+
 
     public static void main(String[] args) {
         Client client = new Client("127.0.0.1", 1234);
