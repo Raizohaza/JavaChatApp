@@ -1,29 +1,50 @@
-package org.ChatApp.socket;
+package org.chatapp.socket;
 
-import org.ChatApp.model.*;
+import lombok.Getter;
+import org.chatapp.model.*;
 
-import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
-import java.util.Date;
 
-public class Client extends JFrame {
+public class Client {
     Socket socket = null;
+    Socket eventSocket;
     ObjectOutputStream outputStream = null;
     ObjectInputStream inputStream = null;
+    ObjectInputStream eventInputStream;
+    @Getter
+    final ChatEventManager eventManager = new ChatEventManager();
 
-    public Client(String address, int port) {
+    public Client(String address, int port, int eventPort) {
         try {
             socket = new Socket(address, port);
-
             System.out.println("Connected");
 
             outputStream = new ObjectOutputStream(socket.getOutputStream());
 
             inputStream = new ObjectInputStream(socket.getInputStream());
+
+            startListeningForEvents(address, eventPort);
         } catch (IOException e) {
-            System.out.println(e);
+            System.out.println(e.getMessage());
         }
+    }
+
+    public void startListeningForEvents(String address, int eventPort) {
+        new Thread(() -> {
+            try {
+                eventSocket = new Socket(address, eventPort);
+                System.out.println(eventSocket);
+                eventInputStream = new ObjectInputStream(eventSocket.getInputStream());
+                while (true) {
+                    ChatEvent receivedEvent = (ChatEvent) eventInputStream.readObject();
+                    System.out.println(receivedEvent);
+                    eventManager.notify(receivedEvent.getEventType(), receivedEvent.getData());
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                System.out.println(e.getMessage());
+            }
+        }).start();
     }
 
     public Response sendRequest(RequestType type, Object data) {
@@ -31,7 +52,7 @@ public class Client extends JFrame {
             outputStream.writeObject(new Request(type, data));
             return receiveResponse();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
         return new Response(ResponseType.FAILURE, "Request failed.", null);
     }
@@ -40,77 +61,56 @@ public class Client extends JFrame {
         try {
             return (Response) inputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
         return new Response(ResponseType.FAILURE, "Response receive failed.", null);
     }
 
-    public Response sendFile(String filePath, Contact fromContact, Contact toContact, int conversationId) {
-        try {
-            File file = new File(filePath);
-            byte[] fileData = new byte[(int) file.length()];
-            FileInputStream fileInputStream = new FileInputStream(file);
-            fileInputStream.read(fileData);
-            fileInputStream.close();
-
-            FileMessage fileMessage = new FileMessage(0, fromContact.getPhone_number(), toContact.getPhone_number(),
-                    new Date(), conversationId, file.getName(), fileData);
-
-            return sendRequest(RequestType.SEND_FILE, fileMessage);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return new Response(ResponseType.FAILURE, "Failed to send file.", null);
-    }
 
     public void close() {
         try {
             outputStream.writeObject(new Request(RequestType.LOGOUT, null));
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         } finally {
             try {
                 if (outputStream != null) outputStream.close();
                 if (inputStream != null) inputStream.close();
                 if (socket != null) socket.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
         }
     }
 
+    public void downloadFile(String fileName) {
+        Response response = sendRequest(RequestType.RECEIVE_FILE, fileName);
 
-    public static void main(String[] args) {
-        Client client = new Client("127.0.0.1", 1234);
+        if (response.getType() == ResponseType.SUCCESS) {
+            FileMessage fileMessage = (FileMessage) response.getData();
+            String filePath = "ClientStore/" + fileMessage.getFileName();
 
-        try {
-            // Register a new contact
-            Contact newContact = new Contact();
-            newContact.setUser_name("username");
-            newContact.setPassword("hashed_password");
-            newContact.setPhone_number("1234567890");
-            System.out.println(client.sendRequest(RequestType.REGISTER, newContact).getMessage());
-
-            // Login
-            Contact loggedInContact = (Contact) client.sendRequest(RequestType.LOGIN, newContact).getData();
-            if (loggedInContact != null) {
-                System.out.println("Logged in: " + loggedInContact.getUser_name());
-            } else {
-                System.out.println("Login failed");
+            File directory = new File("ClientStore");
+            if (!directory.exists()) {
+                if (directory.mkdirs()) {
+                    System.out.println("Directory created: " + directory.getAbsolutePath());
+                } else {
+                    System.err.println("Failed to create directory: " + directory.getAbsolutePath());
+                    return;
+                }
             }
 
-//            // Get contacts
-//            List<Contact> contacts = (List<Contact>) client.sendRequest(RequestType.GET_CONTACTS, null).getData();
-//            if (contacts != null) {
-//                contacts.forEach(contact -> System.out.println("Contact: " + contact.getUser_name()));
-//            } else {
-//                System.out.println("Failed to get contacts");
-//            }
-
-            // ... (similarly handle other request types)
-
-        } finally {
-            client.close();
+            try (FileOutputStream fileOutputStream = new FileOutputStream(filePath)) {
+                fileOutputStream.write(fileMessage.getFileData());
+                System.out.println("File received: " + filePath);
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        } else {
+            System.out.println("Failed to download file: " + fileName);
         }
+
     }
+
+
 }

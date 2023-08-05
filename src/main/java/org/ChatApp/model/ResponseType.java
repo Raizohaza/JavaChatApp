@@ -1,8 +1,6 @@
-package org.ChatApp.model;
+package org.chatapp.model;
 
 public enum ResponseType {
     SUCCESS,
     FAILURE,
-    MESSAGE
-    // Add more response types as needed
 }

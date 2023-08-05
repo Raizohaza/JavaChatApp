@@ -1,10 +1,10 @@
-package org.ChatApp.forms;
+package org.chatapp.forms;
 
-import org.ChatApp.model.Contact;
-import org.ChatApp.model.RequestType;
-import org.ChatApp.model.Response;
-import org.ChatApp.model.ResponseType;
-import org.ChatApp.socket.Client;
+import org.chatapp.model.Contact;
+import org.chatapp.model.RequestType;
+import org.chatapp.model.Response;
+import org.chatapp.model.ResponseType;
+import org.chatapp.socket.Client;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -38,7 +38,7 @@ public class ClientUI {
         portField = new JTextField("1234");
         userNameField = new JTextField("Nguyen Van A");
         passwordField = new JPasswordField("1");
-        phoneNumberField = new JTextField("0907000000");
+        phoneNumberField = new JTextField("");//0907000000
         loginRadio = new JRadioButton("Login");
         registerRadio = new JRadioButton("Register");
         JButton startButton = new JButton("Start");
@@ -84,7 +84,7 @@ public class ClientUI {
 
             Contact contact = new Contact(0, username, password, null, phoneNumber);
             RequestType type = isLogin ? RequestType.LOGIN : RequestType.REGISTER;
-            client = new Client(ipAddress, port);
+            client = new Client(ipAddress, port,port+1);
             Response response = client.sendRequest(type, contact);
             if (ResponseType.SUCCESS.equals(response.getType())) {
                 frame.setVisible(false);
@@ -104,12 +104,33 @@ public class ClientUI {
     }
 
     private boolean validateFields() {
-        return !ipAddressField.getText().isEmpty() &&
-                !portField.getText().isEmpty() &&
-                !userNameField.getText().isEmpty() &&
-                passwordField.getPassword().length > 0 &&
-                !phoneNumberField.getText().isEmpty() &&
-                (loginRadio.isSelected() || registerRadio.isSelected());
+        String ipAddress = ipAddressField.getText().trim();
+        String port = portField.getText().trim();
+        String username = userNameField.getText().trim();
+        char[] password = passwordField.getPassword();
+        String phoneNumber = phoneNumberField.getText().trim();
+
+        boolean isValidPort = isValidPort(port);
+        boolean isValidUsername = !username.isEmpty() && username.length() <= 20;
+        boolean isValidPassword = password.length > 0 && password.length <= 20;
+        boolean isValidPhoneNumber = !phoneNumber.isEmpty(); // Update to your phone number validation logic
+
+        boolean isLoginSelected = loginRadio.isSelected();
+        boolean isRegisterSelected = registerRadio.isSelected();
+
+        return !ipAddress.isEmpty() && isValidPort && (
+                (isLoginSelected && isValidUsername && isValidPassword) ||
+                        (isRegisterSelected && isValidUsername && isValidPassword && isValidPhoneNumber)
+        );
+    }
+
+    private boolean isValidPort(String port) {
+        try {
+            int portNumber = Integer.parseInt(port);
+            return portNumber >= 0 && portNumber <= 65535;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     public static void main(String[] args) {

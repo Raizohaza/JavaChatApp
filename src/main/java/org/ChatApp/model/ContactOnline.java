@@ -5,12 +5,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Request implements Serializable {
-    private RequestType type;
-    private Object data= null;
+public class ContactOnline implements Serializable {
+    private Contact contact = null;
+    private boolean online = false;
 }
-
-

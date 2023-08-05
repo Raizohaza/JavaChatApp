@@ -1,4 +1,4 @@
-package org.ChatApp.model;
+package org.chatapp.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -88,5 +88,19 @@ public class Conversation implements Serializable {
         }
 
         return null;
+    }
+
+    public static boolean isMemberOfConversation(int contactId, int conversationId) {
+        String sql = "SELECT * FROM group_member WHERE contact_id = ? AND conversation_id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, contactId);
+            statement.setInt(2, conversationId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());// Handle the exception appropriately
+            return false;
+        }
     }
 }

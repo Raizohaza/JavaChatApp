@@ -1,44 +1,47 @@
-package org.ChatApp.forms;
+package org.chatapp.forms;
 
-import org.ChatApp.model.*;
-import org.ChatApp.socket.Client;
+import org.chatapp.model.*;
+import org.chatapp.socket.ChatEventListener;
+import org.chatapp.socket.Client;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
+import javax.swing.text.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class ChatGui extends JFrame {
+public class ChatGui extends JFrame implements ChatEventListener {
     private JButton btnSend;
     private JTextField textMsg;
     private JPanel panelMain;
-    private JPanel panelInput;
     private JTextPane chatArea;
     private JButton btnSendFile;
     private JLabel textFriendName;
-    private JScrollPane scrollpane;
-    final Integer height = 600;
+    final Integer height = 360;
     final Integer width = 600;
     Contact selectedUser;
-    Contact contact;
+    final Contact loginedContact;
     List<Message> messageList = new ArrayList<>();
-    FriendListChoose panel1;
-    Client client;
+    final FriendListChoose panel1;
+    final Client client;
     Integer conversationId = 0;
-    private Timer updateTimer;
+    private boolean isDownloadingFile = false;
 
-    public ChatGui(Client client, Contact contact) {
+    public ChatGui(Client client, Contact loginedContact) {
         this.client = client;
-        this.contact = contact;
+        this.client.getEventManager().subscribe("message", this);
+        this.client.getEventManager().subscribe("online", this);
+        this.client.getEventManager().subscribe("offline", this);
+
+        this.loginedContact = loginedContact;
 
         initComponents();
         //user info
@@ -52,39 +55,31 @@ public class ChatGui extends JFrame {
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setDefaultLookAndFeelDecorated(true);
-        setTitle("Chat app: " + contact.getUser_name());
+        setTitle("Chat app: " + loginedContact.getUser_name());
 
         btnSend.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
                 String msg = textMsg.getText();
-                Response response = client.sendRequest(RequestType.SEND_MESSAGE, new Message(0, contact.getPhone_number(), msg, new Date(), conversationId));
-                System.out.println(contact);
+                Response response = client.sendRequest(RequestType.SEND_MESSAGE, new Message(0, loginedContact.getPhone_number(), msg, new Date(), conversationId));
+                System.out.println(loginedContact);
                 if (response.getType().equals(ResponseType.SUCCESS)) {
                     appendMessage((Message) response.getData());
                 } else System.out.println(response);
             }
         });
 
-        btnSendFile.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                super.mouseClicked(e);
-                JFileChooser fileChooser = new JFileChooser();
-                int result = fileChooser.showOpenDialog(null);
-
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    File selectedFile = fileChooser.getSelectedFile();
-                    String filePath = selectedFile.getAbsolutePath();
-
-                    Response response = client.sendFile(filePath, contact, selectedUser, conversationId);
-                    if (ResponseType.SUCCESS.equals(response.getType())) {
-                        String fileInfo = "File sent: " + selectedFile.getName();
-                        appendInfoMessage(fileInfo);
-                    } else {
-//                        showDialog("Failed to send file: " + response.getMessage());
-                    }
+        btnSendFile.addActionListener(e ->
+        {
+            JFileChooser fileChooser = new JFileChooser();
+            int returnValue = fileChooser.showOpenDialog(null);
+            if (returnValue == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                try {
+                    sendFile(selectedFile);
+                } catch (IOException ex) {
+                    System.out.println(ex.getMessage());
                 }
             }
         });
@@ -111,39 +106,56 @@ public class ChatGui extends JFrame {
             }
         });
 
-        startUpdateTimer();
+//        startUpdateTimer();
+
+        // Add a MouseListener to the chatArea
+        chatArea.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                StyledDocument doc = chatArea.getStyledDocument();
+                Element elem = doc.getCharacterElement(chatArea.viewToModel2D(e.getPoint()));
+
+                // Check if the clicked element represents a File message
+                // Extract the file name from the text
+                String messageText;
+                try {
+                    messageText = doc.getText(elem.getStartOffset(), elem.getEndOffset() - elem.getStartOffset());
+                } catch (BadLocationException ex) {
+                    System.out.println(ex.getMessage());
+                    return;
+                }
+
+                if (messageText.contains("File: ")) {
+                    // Extract the file name from the message text
+                    int startIndex = messageText.indexOf("File: ") + 6;
+                    String fileName = messageText.substring(startIndex);
+
+                    System.out.println("File Name: " + fileName);
+                    isDownloadingFile = true;
+                    client.downloadFile(fileName);
+                    isDownloadingFile = false;
+                }
+            }
+        });
         setVisible(true);
     }
 
-    private void startUpdateTimer() {
-        int intervalMilliseconds = 1000; // 1 second interval
-        updateTimer = new Timer(intervalMilliseconds, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.out.println("Updating chat area...");
-                updateChatArea();
-            }
-        });
+    private void sendFile(File selectedFile) throws IOException {
+        try(FileInputStream fileInputStream = new FileInputStream(selectedFile)){
+            byte[] fileData = fileInputStream.readAllBytes();
 
-        updateTimer.start();
-    }
-
-    private void appendInfoMessage(String message) {
-        StyledDocument document = chatArea.getStyledDocument();
-        SimpleAttributeSet alignStyle = new SimpleAttributeSet();
-        StyleConstants.setAlignment(alignStyle, StyleConstants.ALIGN_CENTER);
-        StyleConstants.setFontSize(alignStyle, 12);
-        StyleConstants.setItalic(alignStyle, true);
-
-        try {
-            document.insertString(document.getLength(), "\n" + message, alignStyle);
-            document.setParagraphAttributes(document.getLength(), 1, alignStyle, false);
-        } catch (BadLocationException e) {
-            throw new RuntimeException(e);
+            FileMessage fileMessage = new FileMessage();
+            fileMessage.setFrom_number(loginedContact.getPhone_number());
+            fileMessage.setSent(new Date());
+            fileMessage.setConversation_id(conversationId);
+            fileMessage.setFileName(selectedFile.getName());
+            fileMessage.setFileData(fileData);
+            client.sendRequest(RequestType.SEND_FILE, fileMessage);
         }
     }
+
     private void getConversation() {
-        Response response = client.sendRequest(RequestType.CREATE_CONVERSATION, new CreateConversationData(contact.getPhone_number(), selectedUser.getPhone_number()));
+        Response response = client.sendRequest(RequestType.CREATE_CONVERSATION, new CreateConversationData(loginedContact.getPhone_number(), selectedUser.getPhone_number()));
         if (ResponseType.SUCCESS.equals(response.getType())) {
             conversationId = (Integer) response.getData();
         } else {
@@ -154,7 +166,12 @@ public class ChatGui extends JFrame {
 
     private void updateChatArea() {
         List<Message> newMessageList = getMessageHistory(conversationId);
-        System.out.println(newMessageList);
+        if (isDownloadingFile) {
+            return;
+        }
+        if (messageList == null) {
+            messageList = new ArrayList<>();
+        }
         if (newMessageList != null
                 && !messageList.isEmpty()
                 && newMessageList.size() == messageList.size())
@@ -164,10 +181,13 @@ public class ChatGui extends JFrame {
             StyledDocument document = chatArea.getStyledDocument();
             try {
                 document.remove(0, document.getLength());
-                messageList.forEach(this::appendMessage);
+                messageList.forEach(message -> {
+                    if (message.getMessage_text().contains("File: "))
+                        appendFileMessage(message.getMessage_text());
+                    else appendMessage(message);
+                });
                 chatArea.setCaretPosition(chatArea.getDocument().getLength());
             } catch (BadLocationException e) {
-
                 throw new RuntimeException(e);
             }
 
@@ -192,14 +212,33 @@ public class ChatGui extends JFrame {
     }
 
     private void appendMessage(Message message) {
-        if (message == null)
-            return;
-        if (message.getFrom_number().equals(contact.getPhone_number())) {
-            String chatText = "\n" + contact.getUser_name() + ": " + message.getMessage_text();
+        if (message == null) return;
+
+        if (message.getConversation_id() != conversationId) return;
+
+        if (message.getFrom_number().equals(loginedContact.getPhone_number())) {
+            String chatText = "\n" + loginedContact.getUser_name() + ": " + message.getMessage_text();
             addStyledLine(chatText, StyleConstants.ALIGN_RIGHT, Color.BLACK);
-        } else {
-            String chatText = "\n" + selectedUser.getUser_name() + ": " + message.getMessage_text();
-            addStyledLine(chatText, StyleConstants.ALIGN_LEFT, Color.BLUE);
+            return;
+        }
+
+        String chatText = "\n" + selectedUser.getUser_name() + ": " + message.getMessage_text();
+        addStyledLine(chatText, StyleConstants.ALIGN_LEFT, Color.BLUE);
+
+    }
+
+    private void appendFileMessage(String message) {
+        StyledDocument document = chatArea.getStyledDocument();
+        SimpleAttributeSet alignStyle = new SimpleAttributeSet();
+        StyleConstants.setAlignment(alignStyle, StyleConstants.ALIGN_CENTER);
+        StyleConstants.setFontSize(alignStyle, 12);
+        StyleConstants.setItalic(alignStyle, true);
+
+        try {
+            document.insertString(document.getLength(), "\n" + message, alignStyle);
+            document.setParagraphAttributes(document.getLength(), 1, alignStyle, false);
+        } catch (BadLocationException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -232,21 +271,37 @@ public class ChatGui extends JFrame {
     }
 
     @SuppressWarnings("unchecked")
-    public List<Contact> getContacts() {
+    public List<ContactOnline> getContacts() {
         Response response = client.sendRequest(RequestType.GET_CONTACTS, null);
         if (response.getData() != null) {
-            List<Contact> contactList = (List<Contact>) response.getData();
-            contactList.removeIf(item -> item.getPhone_number().equals(contact.getPhone_number()));
+            List<ContactOnline> contactList = (List<ContactOnline>) response.getData();
+            contactList.removeIf(item -> item.getContact().getPhone_number().equals(loginedContact.getPhone_number()));
             return contactList;
         }
         return null;
     }
 
+    @Override
+    public void onChatEvent(String eventType, Object data) {
+        switch (eventType) {
+            case "online", "offline" -> panel1.updateOnlineList(getContacts());
+            case "message" -> {
+                Message newMessage = (Message) data;
+                if (!newMessage.getFrom_number().equals(loginedContact.getPhone_number()))
+                    appendMessage(newMessage);
+                chatArea.setCaretPosition(chatArea.getDocument().getLength());
+            }
+            default -> {
+            }
+        }
+    }
+
     private void initComponents() {
         panelMain = new JPanel();
         textFriendName = new JLabel("Friend");
-        JScrollPane scrollpane = new JScrollPane();
+        JScrollPane scrollPane = new JScrollPane();
         chatArea = new JTextPane();
+        chatArea.setEditable(false);
 //        chatArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add a margin
 
         JPanel panelInput = new JPanel();
@@ -271,8 +326,8 @@ public class ChatGui extends JFrame {
         gbc.weighty = 1.0;
         gbc.insets = new Insets(0, 20, 0, 0);
         chatArea.setEditable(false);
-        scrollpane.setViewportView(chatArea);
-        panelMain.add(scrollpane, gbc);
+        scrollPane.setViewportView(chatArea);
+        panelMain.add(scrollPane, gbc);
 
         panelInput.setLayout(new GridBagLayout());
         gbc = new GridBagConstraints();

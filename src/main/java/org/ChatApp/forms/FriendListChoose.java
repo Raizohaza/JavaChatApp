@@ -1,20 +1,21 @@
-package org.ChatApp.forms;
+package org.chatapp.forms;
 
 import lombok.Getter;
-import org.ChatApp.model.Contact;
+import org.chatapp.model.Contact;
+import org.chatapp.model.ContactOnline;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 public class FriendListChoose extends JPanel {
-    private JPanel panelMain;
     final Integer height = 600;
-    final Integer width = 450;
     @Getter
     Contact selectedContact;
-    ChatGui chatGui;
+    final ChatGui chatGui;
+    JScrollPane sp;
 
     public FriendListChoose(ChatGui chatGui) {
         this.chatGui = chatGui;
@@ -23,33 +24,43 @@ public class FriendListChoose extends JPanel {
 
     private void initPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        JLabel friendLabel = new JLabel("Online list");
+        add(new JLabel(" "));
+        add(friendLabel);
 
-        Contact[] contacts = chatGui.getContacts().toArray(new Contact[0]);
-        JList<Contact> list = new JList<>(contacts);
+        sp = new JScrollPane();
+        sp.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        add(sp);
+
+        updateOnlineList(chatGui.getContacts());
+        setPreferredSize(new Dimension(50, height));
+    }
+
+    public void updateOnlineList(List<ContactOnline> contactList) {
+        ContactOnline[] contacts = contactList.toArray(new ContactOnline[0]);
+        JList<ContactOnline> list = new JList<>(contacts);
         list.setCellRenderer(new ContactCellRenderer());
         list.setAlignmentX(Component.CENTER_ALIGNMENT);
         list.setSelectedIndex(0);
-        selectedContact = contacts[0];
+        selectedContact = contacts[0].getContact();
 
-        JScrollPane sp = new JScrollPane(list);
-        sp.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        JLabel friendLabel = new JLabel("Friend list");
-        add(new JLabel(" "));
 
-        add(friendLabel);
-        add(sp);
         list.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
-                selectedContact = list.getSelectedValue();
+                selectedContact = list.getSelectedValue().getContact();
                 System.out.println(selectedContact);
                 if (chatGui != null) {
                     chatGui.changeChat(selectedContact);
                 }
             }
         });
-        setPreferredSize(new Dimension(50, height));
+        if(sp !=null){
+            sp.setViewportView(list);
+            return;
+        }
+        sp= new JScrollPane(list);
     }
 
     public static void main(String[] args) {

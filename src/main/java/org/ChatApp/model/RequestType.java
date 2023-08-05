@@ -1,4 +1,4 @@
-package org.ChatApp.model;
+package org.chatapp.model;
 
 public enum RequestType {
     LOGIN,
@@ -9,16 +9,8 @@ public enum RequestType {
     CREATE_CONVERSATION,
     ADD_MEMBER,
     REMOVE_MEMBER,
-    UPDATE_PROFILE,
     GET_MESSAGE_HISTORY,
     SEND_FILE,
     RECEIVE_FILE,
-    TYPING_STATUS,
-    READ_RECEIPT,
-    DELETE_MESSAGE,
-    BLOCK_CONTACT,
-    UNBLOCK_CONTACT,
-    GET_BLOCKED_CONTACTS,
-    REPORT_USER,
     LOGOUT
 }

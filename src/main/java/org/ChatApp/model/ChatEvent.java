@@ -7,7 +7,8 @@ import java.io.Serializable;
 
 @Data
 @AllArgsConstructor
-public class CreateConversationData implements Serializable {
-    String from_number;
-    String to_number;
+public class ChatEvent implements Serializable {
+    private String eventType;
+    private Object data;
 }
+

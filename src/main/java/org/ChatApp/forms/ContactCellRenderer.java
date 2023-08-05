@@ -1,12 +1,23 @@
-package org.ChatApp.forms;
+package org.chatapp.forms;
 
-import org.ChatApp.model.Contact;
+import org.chatapp.model.ContactOnline;
 
 import javax.swing.*;
 import java.awt.*;
 
-class ContactCellRenderer extends JLabel implements ListCellRenderer<Object> {
+class ContactCellRenderer extends JPanel implements ListCellRenderer<Object> {
+    private final JLabel nameLabel;
+    private final JLabel statusLabel;
 
+    public ContactCellRenderer() {
+        setLayout(new BorderLayout());
+
+        nameLabel = new JLabel();
+        statusLabel = new JLabel();
+
+        add(nameLabel, BorderLayout.WEST);
+        add(statusLabel, BorderLayout.EAST);
+    }
     public Component getListCellRendererComponent(
             JList<?> list,           // the list
             Object value,            // value to display
@@ -14,10 +25,20 @@ class ContactCellRenderer extends JLabel implements ListCellRenderer<Object> {
             boolean isSelected,      // is the cell selected
             boolean cellHasFocus)    // does the cell have focus
     {
-        Contact user = (Contact) value;
-        setText(user.getUser_name());
-        setIcon(user.getImage());
+        ContactOnline user = (ContactOnline) value;
+        nameLabel.setText(user.getContact().getUser_name());
+        nameLabel.setIcon(user.getContact().getImage());
         setPreferredSize(new Dimension(100,50));
+
+        if (user.isOnline()) {
+            statusLabel.setText("Online");
+            statusLabel.setForeground(Color.GREEN.darker());
+        } else {
+            statusLabel.setText("Offline");
+            statusLabel.setForeground(Color.RED);
+        }
+
+
         if (isSelected) {
             setBackground(list.getSelectionBackground());
             setForeground(list.getSelectionForeground());

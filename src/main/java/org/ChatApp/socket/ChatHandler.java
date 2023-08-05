@@ -1,96 +1,128 @@
-package org.ChatApp.socket;
+package org.chatapp.socket;
 
-import org.ChatApp.model.*;
+import lombok.Getter;
+import lombok.Setter;
+import org.chatapp.model.*;
 
 import java.io.*;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@Getter
 public class ChatHandler implements Runnable {
+    public static final String STORE_PATH = "Store/";
     private final Socket clientSocket;
     private final Server server;
-    private ObjectInputStream inputStream;
-    private ObjectOutputStream outputStream;
-    private Contact clientInfo;
+    private final ObjectInputStream inputStream;
+    private final ObjectOutputStream outputStream;
+    @Setter
+    private ChatEventSocketHandler eventHandler = null;
+    @Getter
+    private Contact loggedInContact = null;
+    private boolean isRunning = true;
 
-    public ChatHandler(Socket clientSocket, Server server) {
+
+    public ChatHandler(Socket clientSocket, Server server) throws IOException {
         this.clientSocket = clientSocket;
         this.server = server;
 
-        try {
-            outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-            inputStream = new ObjectInputStream(clientSocket.getInputStream());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+        inputStream = new ObjectInputStream(clientSocket.getInputStream());
     }
 
     @Override
     public void run() {
         try {
-            while (true) {
+            while (isRunning) {
                 Request request = (Request) inputStream.readObject();
                 processRequest(request);
             }
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         } finally {
-            close();
+            try {
+                close();
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
         }
     }
 
-    private void processRequest(Request request) throws IOException {
+    private void processRequest(Request request) throws Exception {
         RequestType type = request.getType();
         Object data = request.getData();
 
-        try {
-            switch (type) {
-                case LOGIN -> handleLogin((Contact) data);
-                case REGISTER -> handleRegistration((Contact) data);
-                case GET_CONTACTS -> handleGetContacts();
-                case CREATE_CONVERSATION -> {
-                    CreateConversationData conversationData = (CreateConversationData) data;
-                    Contact fromContact = Contact.getByPhoneNumber(conversationData.getFrom_number());
-                    Contact toContact = Contact.getByPhoneNumber(conversationData.getTo_number());
+        switch (type) {
+            case LOGIN -> handleLogin((Contact) data);
+            case REGISTER -> handleRegistration((Contact) data);
+            case GET_CONTACTS -> handleGetContacts();
+            case CREATE_CONVERSATION -> {
+                CreateConversationData conversationData = (CreateConversationData) data;
+                Contact fromContact = Contact.getByPhoneNumber(conversationData.getFrom_number());
+                Contact toContact = Contact.getByPhoneNumber(conversationData.getTo_number());
 
-                    if (fromContact != null && toContact != null) {
-                        createConversation(fromContact, toContact);
-                    } else {
-                        outputStream.writeObject(new Response(ResponseType.FAILURE, "Invalid contacts", null));
-                    }
+                if (fromContact != null && toContact != null) {
+                    createConversation(fromContact, toContact);
+                } else {
+                    outputStream.writeObject(new Response(ResponseType.FAILURE, "Invalid contacts", null));
                 }
-
-                case GET_MESSAGE_HISTORY -> {
-                    System.out.println(data);
-                    Integer consersationId = (Integer) data;
-
-                    if (consersationId != 0) {
-                        getMessageHistory(consersationId);
-                    } else {
-                        outputStream.writeObject(new Response(ResponseType.FAILURE, "Invalid contacts", null));
-                    }
-                }
-
-                case SEND_MESSAGE -> {
-                    Message message = (Message) data;
-                    Contact contact = Contact.getByPhoneNumber(message.getFrom_number());
-                    if (contact != null) {
-                        handleMessage(message);
-                        return;
-                    }
-                    outputStream.writeObject(new Response(ResponseType.FAILURE, "No contacts", null));
-                }
-                case SEND_FILE -> handleSendFile((FileMessage) data);
-                case LOGOUT -> handleLogout();
-                default -> System.out.println("Unknown request type: " + type);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+
+            case GET_MESSAGE_HISTORY -> {
+                System.out.println(data);
+                Integer conservationId = (Integer) data;
+
+                if (conservationId != 0) {
+                    getMessageHistory(conservationId);
+                } else {
+                    outputStream.writeObject(new Response(ResponseType.FAILURE, "Invalid contacts", null));
+                }
+            }
+
+            case SEND_MESSAGE -> {
+                Message message = (Message) data;
+                Contact contact = Contact.getByPhoneNumber(message.getFrom_number());
+                if (contact != null) {
+                    handleMessage(message);
+                    return;
+                }
+                outputStream.writeObject(new Response(ResponseType.FAILURE, "No contacts", null));
+            }
+            case SEND_FILE -> handleSendFile((FileMessage) data);
+            case RECEIVE_FILE -> {
+                String fileName = (String) data;
+                handleDownloadFile(fileName);
+            }
+
+            case LOGOUT -> handleLogout();
+            default -> System.out.println("Unknown request type: " + type);
+        }
+
+        outputStream.flush();
+    }
+
+    private void handleDownloadFile(String fileName) throws IOException {
+        try {
+            File file = new File(STORE_PATH + fileName); // Replace with the actual path
+            if (file.exists()) {
+                try (FileInputStream fileInputStream = new FileInputStream(file)) {
+                    byte[] fileData = fileInputStream.readAllBytes();
+                    FileMessage fileMessage = new FileMessage("", "", new Date(), 0, fileName, fileData);
+
+                    Response response = new Response(ResponseType.SUCCESS, "File download successful.", fileMessage);
+                    outputStream.writeObject(response);
+                }
+            } else {
+                Response response = new Response(ResponseType.FAILURE, "File not found.", null);
+                outputStream.writeObject(response);
+            }
         } finally {
-            outputStream.flush();
+            Response response = new Response(ResponseType.FAILURE, "File download failed.", null);
+            outputStream.writeObject(response);
         }
     }
 
@@ -98,7 +130,7 @@ public class ChatHandler implements Runnable {
         int status = message.save();
         System.out.println(status);
         if (status == 1) {
-//            server.broadcastMessage(message);
+            server.sendMessageEventToClients(message);
             outputStream.writeObject(new Response(ResponseType.SUCCESS, "Message history retrieved successfully.", message));
         } else {
             outputStream.writeObject(new Response(ResponseType.FAILURE, "No messages found.", null));
@@ -115,27 +147,33 @@ public class ChatHandler implements Runnable {
         }
     }
 
+    public boolean isMemberOfConversation(int conversationId) {
+        System.out.println("isMemberOfConversation: " + loggedInContact.getContact_id() + "\t" + conversationId + "\t" + Conversation.isMemberOfConversation(loggedInContact.getContact_id(), conversationId));
+        return Conversation.isMemberOfConversation(loggedInContact.getContact_id(), conversationId);
+    }
+
     private void handleGetContacts() throws SQLException, IOException {
         List<Contact> contacts = Contact.getAll();
-        if (!contacts.isEmpty()) {
-            outputStream.writeObject(new Response(ResponseType.SUCCESS, "Get contacts successful.", contacts));
+        List<ContactOnline> onlineContacts = new ArrayList<>();
+        List<String> onlineNumber = new ArrayList<>(server.clients.stream().map(client -> client.getLoggedInContact().getPhone_number()).toList());
+
+        if (!onlineNumber.isEmpty()) {
+            for (Contact contact : contacts) {
+                onlineContacts.add(new ContactOnline(contact, onlineNumber.contains(contact.getPhone_number())));
+            }
+        }
+        if (!onlineContacts.isEmpty()) {
+            outputStream.writeObject(new Response(ResponseType.SUCCESS, "Get contacts successful.", onlineContacts));
             return;
         }
         outputStream.writeObject(new Response(ResponseType.FAILURE, "No contacts", null));
     }
 
+
     private void createConversation(Contact fromContact, Contact toContact) throws SQLException, IOException {
         Conversation existingConversation = Conversation.getChatConversation(fromContact, toContact);
         System.out.println(existingConversation);
         if (existingConversation != null) {
-            // Only create a message
-//            Message message = new Message();
-//            message.setFrom_number(fromContact.getPhone_number());
-//            message.setMessage_text("This is a test message.");
-//            message.setSent(new Date());
-//
-//            message.setConversation_id(existingConversation.getConversation_id());
-//            message.save();
             Response response = new Response(ResponseType.SUCCESS, "Message sent successfully.", existingConversation.getConversation_id());
             outputStream.writeObject(response);
         } else {
@@ -150,110 +188,90 @@ public class ChatHandler implements Runnable {
             GroupMember groupMember2 = new GroupMember(toContact.getContact_id(), newConversation.getConversation_id(), new Date(), null);
             groupMember2.save();
 
-//            Message message = new Message();
-//            message.setFrom_number(fromContact.getPhone_number());
-//            message.setMessage_text("This is a test message.");
-//            message.setSent(new Date());
-//
-//            message.setConversation_id(newConversation.getConversation_id());
-//            message.save();
-
             Response response = new Response(ResponseType.SUCCESS, "Conversation created and message sent successfully.", newConversation.getConversation_id());
             outputStream.writeObject(response);
         }
     }
     // Handle receiving a file from the client
 
-    private void handleSendFile(FileMessage fileMessage) {
-        String directoryPath = "Store/";
+    private void handleSendFile(FileMessage fileMessage) throws Exception {
+        String directoryPath = STORE_PATH;
         String filePath = directoryPath + fileMessage.getFileName();
 
-        try {
-            File directory = new File(directoryPath);
-            if (!directory.exists()) {
-                if (directory.mkdirs()) {
-                    System.out.println("Directory created: " + directoryPath);
-                } else {
-                    System.err.println("Failed to create directory: " + directoryPath);
-                    outputStream.writeObject(new Response(ResponseType.FAILURE, "Failed to receive file.", null));
-                    return;
-                }
+        File directory = new File(directoryPath);
+        if (!directory.exists()) {
+            if (directory.mkdirs()) {
+                System.out.println("Directory created: " + directoryPath);
+            } else {
+                System.err.println("Failed to create directory: " + directoryPath);
+                outputStream.writeObject(new Response(ResponseType.FAILURE, "Failed to receive file.", null));
+                return;
             }
+        }
 
-            try (FileOutputStream fileOutputStream = new FileOutputStream(filePath)) {
-                fileOutputStream.write(fileMessage.getFileData());
+        try (FileOutputStream fileOutputStream = new FileOutputStream(filePath)) {
+            fileOutputStream.write(fileMessage.getFileData());
+            System.out.println("File received: " + filePath);
 
-                // You can implement further logic here, such as saving the file information in a database
+            // Save the file message as a regular message
+            Message message = new Message(0, fileMessage.getFrom_number(), "File: " + fileMessage.getFileName(), new Date(), fileMessage.getConversation_id());
+            int status = message.save();
 
-                System.out.println("File received: " + filePath);
-
+            if (status == 1) {
                 outputStream.writeObject(new Response(ResponseType.SUCCESS, "File received successfully.", null));
-            } catch (IOException e) {
-                e.printStackTrace();
-                try {
-                    outputStream.writeObject(new Response(ResponseType.FAILURE, "Failed to receive file.", null));
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
+            } else {
+                outputStream.writeObject(new Response(ResponseType.FAILURE, "Failed to receive file.1", null));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+
+        } finally {
+            outputStream.writeObject(new Response(ResponseType.FAILURE, "Failed to receive file.2", null));
         }
     }
 
-    private void sendGroupMessage(Message message, Contact contact) {
-        // Implement sending a group message
-        // This logic depends on how you handle group conversations
-    }
-
     private void handleLogin(Contact contact) throws IOException, SQLException, NoSuchAlgorithmException {
-        Contact loggedInContact = contact.login();
+        loggedInContact = contact.login();
+
         if (loggedInContact != null) {
+            server.sendOnlineEventToClients(contact);
             outputStream.writeObject(new Response(ResponseType.SUCCESS, "Login successful.", loggedInContact));
         } else {
             outputStream.writeObject(new Response(ResponseType.FAILURE, "Invalid credentials.", null));
         }
     }
 
-    private void handleRegistration(Contact contact) throws IOException {
+    private void handleRegistration(Contact contact) throws IOException,SQLException ,NoSuchAlgorithmException{
         try {
             Contact existingContact = Contact.getByPhoneNumber(contact.getPhone_number());
             if (existingContact == null) {
                 contact.save(); // Save the new contact
+                loggedInContact = contact.login();
+                server.sendOnlineEventToClients(contact);
                 outputStream.writeObject(new Response(ResponseType.SUCCESS, "Registration successful.", contact));
             } else {
                 outputStream.writeObject(new Response(ResponseType.FAILURE, "Username or phone number already registered.", null));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } finally {
             outputStream.writeObject(new Response(ResponseType.FAILURE, "Registration failed.", null));
         }
     }
 
-    private void handleLogout() {
-        try {
-            outputStream.writeObject(new Response(ResponseType.SUCCESS, "Logout successful.", null));
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void handleLogout() throws IOException {
+        if (eventHandler != null) {
+            server.removeEventHandler(eventHandler);
+            eventHandler.close();
+            eventHandler = null;
         }
-        close();
+        loggedInContact = null;
+        server.sendOfflineEventToClients();
+        outputStream.writeObject(new Response(ResponseType.SUCCESS, "Logout successful.", null));
+        server.removeClient(this);
+        server.removeThreadClient(Thread.currentThread());
+        isRunning = false;
     }
 
-    public void sendMessage(Message message) {
-        try {
-            outputStream.writeObject(new Response(ResponseType.SUCCESS, "New message received.", message));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void close() {
-        try {
-            if (inputStream != null) inputStream.close();
-            if (outputStream != null) outputStream.close();
-            if (clientSocket != null) clientSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void close() throws IOException {
+        if (inputStream != null) inputStream.close();
+        if (outputStream != null) outputStream.close();
+        if (clientSocket != null) clientSocket.close();
     }
 }

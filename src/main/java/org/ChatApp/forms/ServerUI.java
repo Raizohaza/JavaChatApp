@@ -1,30 +1,28 @@
-package org.ChatApp.forms;
+package org.chatapp.forms;
 
-import org.ChatApp.socket.Server;
+import org.chatapp.socket.Server;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.sql.SQLException;
 
 public class ServerUI {
-    private final JFrame frame;
     private final JTextField ipAddressField;
     private final JTextField portField;
     private final JButton startButton;
     private final JButton stopButton;
     private final JTextPane logTextPane;
     public Server server;
+    Thread tServer = null;
 
     public ServerUI() {
-        frame = new JFrame("Server");
+        JFrame frame = new JFrame("Server");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(400, 300);
         frame.setLayout(new BorderLayout());
@@ -81,19 +79,9 @@ public class ServerUI {
         frame.add(new JScrollPane(logTextPane), BorderLayout.CENTER);
 
         // Add action listeners for the Start and Stop buttons
-        startButton.addActionListener((ActionEvent e) -> {
-            try {
-                startServer();
-            } catch (IOException ex) {
-                logMessage(ex.getMessage());
-            }
+        startButton.addActionListener((ActionEvent e) -> startServer());
 
-        });
-
-        stopButton.addActionListener((ActionEvent e) -> {
-            stopServer();
-
-        });
+        stopButton.addActionListener((ActionEvent e) -> stopServer());
 
         // Disable the Stop button initially
         stopButton.setEnabled(false);
@@ -110,16 +98,16 @@ public class ServerUI {
         }
     }
 
-    private void startServer() throws IOException {
+    private void startServer() {
         String ipAddress = ipAddressField.getText();
         int port = Integer.parseInt(portField.getText());
 
-        Thread tServer = new Thread(() -> {
+        tServer = new Thread(() -> {
             try {
-                new Server(port, this);
+                new Server(port, port + 1, this);
                 logMessage("Server started on " + ipAddress + ":" + port);
-            } catch (ClassNotFoundException | SQLException | IOException e) {
-               e.printStackTrace();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
             } finally {
                 server.stop();
                 startButton.setEnabled(true);
@@ -144,7 +132,7 @@ public class ServerUI {
         logTextPane.setText(logTextPane.getText() + message + "\n");
     }
 
-    private class TextAreaOutputStream extends OutputStream {
+    private static class TextAreaOutputStream extends OutputStream {
         private final JTextPane textPane;
 
         public TextAreaOutputStream(JTextPane textPane) {
@@ -156,7 +144,7 @@ public class ServerUI {
             try {
                 textPane.getDocument().insertString(textPane.getDocument().getLength(), String.valueOf((char) b), null);
             } catch (BadLocationException e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
             textPane.setCaretPosition(textPane.getDocument().getLength());
         }

@@ -13,8 +13,8 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
-group = 'org.ChatApp'
-version = '1.0-SNAPSHOT'
+group = 'org.chatapp'
+//version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -32,7 +32,6 @@ dependencies {
     implementation 'org.projectlombok:lombok:1.18.28'
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    implementation 'com.intellij:forms_rt:7.0.3'
 }
 
 test {
@@ -41,16 +40,14 @@ test {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'org.ChatApp.forms.ClientUI'
+        attributes 'Main-Class': 'org.chatapp.forms.ClientUI'
     }
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
+    archiveFileName.set("ClientJar.jar")
 }
 
 tasks.register('ServerJar', Jar) {
     manifest {
-        attributes 'Main-Class': 'org.ChatApp.forms.ServerUI'
+        attributes 'Main-Class': 'org.chatapp.forms.ServerUI'
     }
     archiveFileName.set("ServerJar.jar")
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -60,10 +57,9 @@ tasks.register('ServerJar', Jar) {
 
 tasks.register('ClientJar', Jar) {
     manifest {
-        attributes 'Main-Class': 'org.ChatApp.forms.ClientUI'
+        attributes 'Main-Class': 'org.chatapp.forms.ClientUI'
     }
     archiveFileName.set("ClientJar.jar")
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
