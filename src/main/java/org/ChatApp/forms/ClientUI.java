@@ -29,9 +29,9 @@ public class ClientUI {
         // Initialize components
         ipAddressField = new JTextField("127.0.0.1");
         portField = new JTextField("1234");
-        userNameField = new JTextField("aa");
-        passwordField = new JPasswordField("bb");
-        phoneNumberField = new JTextField("123456789");
+        userNameField = new JTextField("Nguyen Van A");
+        passwordField = new JPasswordField("1");
+        phoneNumberField = new JTextField("0907000000");
         loginRadio = new JRadioButton("Login");
         registerRadio = new JRadioButton("Register");
         JButton startButton = new JButton("Start");
@@ -56,9 +56,9 @@ public class ClientUI {
         frame.add(phoneNumberField);
         frame.add(new JLabel("Select Action:"));
         frame.add(loginRadio);
-        frame.add(new JLabel()); // Empty label for spacing
+        frame.add(new JLabel());
         frame.add(registerRadio);
-        frame.add(new JLabel()); // Empty label for spacing
+        frame.add(new JLabel());
         frame.add(startButton);
 
         startButton.addActionListener(e -> {
@@ -79,7 +79,6 @@ public class ClientUI {
             client = new Client(ipAddress, port);
             Response response = client.sendRequest(type, contact);
             if (ResponseType.SUCCESS.equals(response.getType())) {
-//                showDialog(response.getMessage());
                 frame.setVisible(false);
                 new ChatGui(client, (Contact) response.getData());
 
