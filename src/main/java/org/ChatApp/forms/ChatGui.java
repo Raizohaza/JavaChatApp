@@ -9,10 +9,10 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -23,28 +23,27 @@ public class ChatGui extends JFrame {
     private JPanel panelMain;
     private JPanel panelInput;
     private JTextPane chatArea;
-    private JButton btnReceive;
+    private JButton btnSendFile;
     private JLabel textFriendName;
     private JScrollPane scrollpane;
     final Integer height = 600;
     final Integer width = 600;
     Contact selectedUser;
     Contact contact;
-    List<String> friendNames;
-    private final List<String> conversationList;
     List<Message> messageList = new ArrayList<>();
     FriendListChoose panel1;
     Client client;
     Integer conversationId = 0;
+    private Timer updateTimer;
 
     public ChatGui(Client client, Contact contact) {
         this.client = client;
         this.contact = contact;
+
+        initComponents();
         //user info
-        friendNames = new ArrayList<>();
         panel1 = new FriendListChoose(this);
 
-        friendNames.add("Pham Thi B");
         if (panel1.getSelectedContact().getUser_name() != null) {
             selectedUser = panel1.getSelectedContact();
             textFriendName.setText(selectedUser.getUser_name());
@@ -54,7 +53,6 @@ public class ChatGui extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setDefaultLookAndFeelDecorated(true);
         setTitle("Chat app: " + contact.getUser_name());
-        conversationList = new ArrayList<>();
 
         btnSend.addMouseListener(new MouseAdapter() {
             @Override
@@ -68,33 +66,41 @@ public class ChatGui extends JFrame {
                 } else System.out.println(response);
             }
         });
-        btnReceive.addMouseListener(new MouseAdapter() {
+
+        btnSendFile.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
-                updateChatArea();
+                JFileChooser fileChooser = new JFileChooser();
+                int result = fileChooser.showOpenDialog(null);
+
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    File selectedFile = fileChooser.getSelectedFile();
+                    String filePath = selectedFile.getAbsolutePath();
+
+                    Response response = client.sendFile(filePath, contact, selectedUser, conversationId);
+                    if (ResponseType.SUCCESS.equals(response.getType())) {
+                        String fileInfo = "File sent: " + selectedFile.getName();
+                        appendInfoMessage(fileInfo);
+                    } else {
+//                        showDialog("Failed to send file: " + response.getMessage());
+                    }
+                }
             }
         });
 
-        setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
+        // Create a JSplitPane to divide the frame vertically
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, panelMain);
+        splitPane.setResizeWeight(0.33); // Set the ratio for panel1 and panelMain
 
+        // Set up the content pane with a margin
+        JPanel contentPane = new JPanel(new BorderLayout());
+        contentPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add a margin
+        contentPane.add(splitPane, BorderLayout.CENTER);
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        add(panel1, gbc);
+        setContentPane(contentPane);
 
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.gridheight = 1;
-        add(panelMain, gbc);
-
+        pack();
         setSize(width, height);
 
         addWindowListener(new WindowAdapter() {
@@ -105,27 +111,37 @@ public class ChatGui extends JFrame {
             }
         });
 
-        Thread intervalThread = new Thread(() -> {
-            while (true) {
-                try {
-                    // Your code to be executed at each interval
-                    System.out.println("Interval thread is running...");
-                    updateChatArea();
-
-                    // Sleep for 1 second
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        intervalThread.start();
-
-
+        startUpdateTimer();
         setVisible(true);
     }
 
+    private void startUpdateTimer() {
+        int intervalMilliseconds = 1000; // 1 second interval
+        updateTimer = new Timer(intervalMilliseconds, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Updating chat area...");
+                updateChatArea();
+            }
+        });
+
+        updateTimer.start();
+    }
+
+    private void appendInfoMessage(String message) {
+        StyledDocument document = chatArea.getStyledDocument();
+        SimpleAttributeSet alignStyle = new SimpleAttributeSet();
+        StyleConstants.setAlignment(alignStyle, StyleConstants.ALIGN_CENTER);
+        StyleConstants.setFontSize(alignStyle, 12);
+        StyleConstants.setItalic(alignStyle, true);
+
+        try {
+            document.insertString(document.getLength(), "\n" + message, alignStyle);
+            document.setParagraphAttributes(document.getLength(), 1, alignStyle, false);
+        } catch (BadLocationException e) {
+            throw new RuntimeException(e);
+        }
+    }
     private void getConversation() {
         Response response = client.sendRequest(RequestType.CREATE_CONVERSATION, new CreateConversationData(contact.getPhone_number(), selectedUser.getPhone_number()));
         if (ResponseType.SUCCESS.equals(response.getType())) {
@@ -150,9 +166,6 @@ public class ChatGui extends JFrame {
                 document.remove(0, document.getLength());
                 messageList.forEach(this::appendMessage);
                 chatArea.setCaretPosition(chatArea.getDocument().getLength());
-//                this.revalidate(); //Update the scrollbar size
-//                JScrollBar vertical = scrollpane.getVerticalScrollBar();
-//                vertical.setValue(vertical.getMaximum());
             } catch (BadLocationException e) {
 
                 throw new RuntimeException(e);
@@ -162,6 +175,7 @@ public class ChatGui extends JFrame {
 
     }
 
+    @SuppressWarnings("unchecked")
     private List<Message> getMessageHistory(Integer id) {
         Response response = client.sendRequest(RequestType.GET_MESSAGE_HISTORY, id);
         System.out.println("req: " + id + "\nres: " + response);
@@ -226,6 +240,70 @@ public class ChatGui extends JFrame {
             return contactList;
         }
         return null;
+    }
+
+    private void initComponents() {
+        panelMain = new JPanel();
+        textFriendName = new JLabel("Friend");
+        JScrollPane scrollpane = new JScrollPane();
+        chatArea = new JTextPane();
+//        chatArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add a margin
+
+        JPanel panelInput = new JPanel();
+        textMsg = new JTextField();
+
+        btnSend = new JButton("Send");
+        btnSendFile = new JButton("SendFile");
+
+        panelMain.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(20, 20, 0, 0);
+        panelMain.add(textFriendName, gbc);
+
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.insets = new Insets(0, 20, 0, 0);
+        chatArea.setEditable(false);
+        scrollpane.setViewportView(chatArea);
+        panelMain.add(scrollpane, gbc);
+
+        panelInput.setLayout(new GridBagLayout());
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1.0;
+        gbc.insets = new Insets(0, 20, 0, 0);
+        panelMain.add(panelInput, gbc);
+
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1.0;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        panelInput.add(textMsg, gbc);
+
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(0, 10, 0, 0);
+        panelInput.add(btnSend, gbc);
+
+        gbc = new GridBagConstraints();
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(5, 10, 0, 0);
+        panelInput.add(btnSendFile, gbc);
     }
 }
 

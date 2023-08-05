@@ -7,6 +7,7 @@ import org.ChatApp.model.ResponseType;
 import org.ChatApp.socket.Client;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class ClientUI {
@@ -24,7 +25,13 @@ public class ClientUI {
         frame = new JFrame("Chat App");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(400, 350);
-        frame.setLayout(new GridLayout(8, 2, 10, 10));
+
+        frame.setLayout(new BorderLayout());
+
+        // Add a margin around the entire layout
+        JPanel mainPanel = new JPanel();
+        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10)); // Adjust the margin values as needed
+        mainPanel.setLayout(new GridLayout(8, 2, 10, 10));
 
         // Initialize components
         ipAddressField = new JTextField("127.0.0.1");
@@ -44,22 +51,23 @@ public class ClientUI {
         buttonGroup.add(registerRadio);
 
         // Add components to the frame
-        frame.add(new JLabel("IP Address:"));
-        frame.add(ipAddressField);
-        frame.add(new JLabel("Port:"));
-        frame.add(portField);
-        frame.add(new JLabel("Username:"));
-        frame.add(userNameField);
-        frame.add(new JLabel("Password:"));
-        frame.add(passwordField);
-        frame.add(new JLabel("Phone Number:"));
-        frame.add(phoneNumberField);
-        frame.add(new JLabel("Select Action:"));
-        frame.add(loginRadio);
-        frame.add(new JLabel());
-        frame.add(registerRadio);
-        frame.add(new JLabel());
-        frame.add(startButton);
+        mainPanel.add(new JLabel("IP Address:"));
+        mainPanel.add(ipAddressField);
+        mainPanel.add(new JLabel("Port:"));
+        mainPanel.add(portField);
+        mainPanel.add(new JLabel("Username:"));
+        mainPanel.add(userNameField);
+        mainPanel.add(new JLabel("Password:"));
+        mainPanel.add(passwordField);
+        mainPanel.add(new JLabel("Phone Number:"));
+        mainPanel.add(phoneNumberField);
+        mainPanel.add(new JLabel("Select Action:"));
+        mainPanel.add(loginRadio);
+        mainPanel.add(new JLabel());
+        mainPanel.add(registerRadio);
+        mainPanel.add(new JLabel());
+        mainPanel.add(startButton);
+        frame.add(mainPanel, BorderLayout.CENTER);
 
         startButton.addActionListener(e -> {
             if (!validateFields()) {
@@ -81,9 +89,7 @@ public class ClientUI {
             if (ResponseType.SUCCESS.equals(response.getType())) {
                 frame.setVisible(false);
                 new ChatGui(client, (Contact) response.getData());
-
                 frame.dispose();
-
             } else {
                 showDialog(response.getMessage());
             }

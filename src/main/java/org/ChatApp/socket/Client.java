@@ -3,10 +3,9 @@ package org.ChatApp.socket;
 import org.ChatApp.model.*;
 
 import javax.swing.*;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.Socket;
+import java.util.Date;
 
 public class Client extends JFrame {
     Socket socket = null;
@@ -36,6 +35,7 @@ public class Client extends JFrame {
         }
         return new Response(ResponseType.FAILURE, "Request failed.", null);
     }
+
     public Response receiveResponse() {
         try {
             return (Response) inputStream.readObject();
@@ -43,6 +43,24 @@ public class Client extends JFrame {
             e.printStackTrace();
         }
         return new Response(ResponseType.FAILURE, "Response receive failed.", null);
+    }
+
+    public Response sendFile(String filePath, Contact fromContact, Contact toContact, int conversationId) {
+        try {
+            File file = new File(filePath);
+            byte[] fileData = new byte[(int) file.length()];
+            FileInputStream fileInputStream = new FileInputStream(file);
+            fileInputStream.read(fileData);
+            fileInputStream.close();
+
+            FileMessage fileMessage = new FileMessage(0, fromContact.getPhone_number(), toContact.getPhone_number(),
+                    new Date(), conversationId, file.getName(), fileData);
+
+            return sendRequest(RequestType.SEND_FILE, fileMessage);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new Response(ResponseType.FAILURE, "Failed to send file.", null);
     }
 
     public void close() {

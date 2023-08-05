@@ -2,9 +2,7 @@ package org.ChatApp.socket;
 
 import org.ChatApp.model.*;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
@@ -85,8 +83,7 @@ public class ChatHandler implements Runnable {
                     }
                     outputStream.writeObject(new Response(ResponseType.FAILURE, "No contacts", null));
                 }
-
-
+                case SEND_FILE -> handleSendFile((FileMessage) data);
                 case LOGOUT -> handleLogout();
                 default -> System.out.println("Unknown request type: " + type);
             }
@@ -163,6 +160,44 @@ public class ChatHandler implements Runnable {
 
             Response response = new Response(ResponseType.SUCCESS, "Conversation created and message sent successfully.", newConversation.getConversation_id());
             outputStream.writeObject(response);
+        }
+    }
+    // Handle receiving a file from the client
+
+    private void handleSendFile(FileMessage fileMessage) {
+        String directoryPath = "Store/";
+        String filePath = directoryPath + fileMessage.getFileName();
+
+        try {
+            File directory = new File(directoryPath);
+            if (!directory.exists()) {
+                if (directory.mkdirs()) {
+                    System.out.println("Directory created: " + directoryPath);
+                } else {
+                    System.err.println("Failed to create directory: " + directoryPath);
+                    outputStream.writeObject(new Response(ResponseType.FAILURE, "Failed to receive file.", null));
+                    return;
+                }
+            }
+
+            try (FileOutputStream fileOutputStream = new FileOutputStream(filePath)) {
+                fileOutputStream.write(fileMessage.getFileData());
+
+                // You can implement further logic here, such as saving the file information in a database
+
+                System.out.println("File received: " + filePath);
+
+                outputStream.writeObject(new Response(ResponseType.SUCCESS, "File received successfully.", null));
+            } catch (IOException e) {
+                e.printStackTrace();
+                try {
+                    outputStream.writeObject(new Response(ResponseType.FAILURE, "Failed to receive file.", null));
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
