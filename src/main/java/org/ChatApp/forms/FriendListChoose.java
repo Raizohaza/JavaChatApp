@@ -37,6 +37,9 @@ public class FriendListChoose extends JPanel {
     }
 
     public void updateOnlineList(List<ContactOnline> contactList) {
+        if (contactList == null)
+            return;
+
         ContactOnline[] contacts = contactList.toArray(new ContactOnline[0]);
         JList<ContactOnline> list = new JList<>(contacts);
         list.setCellRenderer(new ContactCellRenderer());
@@ -56,11 +59,11 @@ public class FriendListChoose extends JPanel {
                 }
             }
         });
-        if(sp !=null){
+        if (sp != null) {
             sp.setViewportView(list);
             return;
         }
-        sp= new JScrollPane(list);
+        sp = new JScrollPane(list);
     }
 
     public static void main(String[] args) {

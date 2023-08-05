@@ -120,7 +120,8 @@ public class ChatHandler implements Runnable {
                 Response response = new Response(ResponseType.FAILURE, "File not found.", null);
                 outputStream.writeObject(response);
             }
-        } finally {
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
             Response response = new Response(ResponseType.FAILURE, "File download failed.", null);
             outputStream.writeObject(response);
         }
@@ -218,12 +219,14 @@ public class ChatHandler implements Runnable {
             int status = message.save();
 
             if (status == 1) {
-                outputStream.writeObject(new Response(ResponseType.SUCCESS, "File received successfully.", null));
+                server.sendMessageEventToClients(message);
+                outputStream.writeObject(new Response(ResponseType.SUCCESS, "File received successfully.", message));
             } else {
                 outputStream.writeObject(new Response(ResponseType.FAILURE, "Failed to receive file.1", null));
             }
 
-        } finally {
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
             outputStream.writeObject(new Response(ResponseType.FAILURE, "Failed to receive file.2", null));
         }
     }
@@ -239,18 +242,19 @@ public class ChatHandler implements Runnable {
         }
     }
 
-    private void handleRegistration(Contact contact) throws IOException,SQLException ,NoSuchAlgorithmException{
+    private void handleRegistration(Contact contact) throws IOException, SQLException, NoSuchAlgorithmException {
         try {
             Contact existingContact = Contact.getByPhoneNumber(contact.getPhone_number());
             if (existingContact == null) {
                 contact.save(); // Save the new contact
                 loggedInContact = contact.login();
-                server.sendOnlineEventToClients(contact);
                 outputStream.writeObject(new Response(ResponseType.SUCCESS, "Registration successful.", contact));
+                server.sendOnlineEventToClients(contact);
             } else {
                 outputStream.writeObject(new Response(ResponseType.FAILURE, "Username or phone number already registered.", null));
             }
-        } finally {
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
             outputStream.writeObject(new Response(ResponseType.FAILURE, "Registration failed.", null));
         }
     }

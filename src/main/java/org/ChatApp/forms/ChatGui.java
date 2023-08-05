@@ -26,14 +26,13 @@ public class ChatGui extends JFrame implements ChatEventListener {
     private JButton btnSendFile;
     private JLabel textFriendName;
     final Integer height = 360;
-    final Integer width = 600;
+    final Integer width = 650;
     Contact selectedUser;
     final Contact loginedContact;
     List<Message> messageList = new ArrayList<>();
     final FriendListChoose panel1;
     final Client client;
     Integer conversationId = 0;
-    private boolean isDownloadingFile = false;
 
     public ChatGui(Client client, Contact loginedContact) {
         this.client = client;
@@ -47,7 +46,7 @@ public class ChatGui extends JFrame implements ChatEventListener {
         //user info
         panel1 = new FriendListChoose(this);
 
-        if (panel1.getSelectedContact().getUser_name() != null) {
+        if (panel1.getSelectedContact() != null) {
             selectedUser = panel1.getSelectedContact();
             textFriendName.setText(selectedUser.getUser_name());
             getConversation();
@@ -77,7 +76,11 @@ public class ChatGui extends JFrame implements ChatEventListener {
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = fileChooser.getSelectedFile();
                 try {
-                    sendFile(selectedFile);
+                    Response response = sendFile(selectedFile);
+                    if (response.getType().equals(ResponseType.SUCCESS)) {
+                        Message msg = (Message) response.getData();
+                        appendFileMessage(msg.getMessage_text());
+                    } else System.out.println(response);
                 } catch (IOException ex) {
                     System.out.println(ex.getMessage());
                 }
@@ -131,16 +134,14 @@ public class ChatGui extends JFrame implements ChatEventListener {
                     String fileName = messageText.substring(startIndex);
 
                     System.out.println("File Name: " + fileName);
-                    isDownloadingFile = true;
                     client.downloadFile(fileName);
-                    isDownloadingFile = false;
                 }
             }
         });
         setVisible(true);
     }
 
-    private void sendFile(File selectedFile) throws IOException {
+    private Response sendFile(File selectedFile) throws IOException {
         try(FileInputStream fileInputStream = new FileInputStream(selectedFile)){
             byte[] fileData = fileInputStream.readAllBytes();
 
@@ -150,7 +151,7 @@ public class ChatGui extends JFrame implements ChatEventListener {
             fileMessage.setConversation_id(conversationId);
             fileMessage.setFileName(selectedFile.getName());
             fileMessage.setFileData(fileData);
-            client.sendRequest(RequestType.SEND_FILE, fileMessage);
+            return client.sendRequest(RequestType.SEND_FILE, fileMessage);
         }
     }
 
@@ -165,18 +166,7 @@ public class ChatGui extends JFrame implements ChatEventListener {
     }
 
     private void updateChatArea() {
-        List<Message> newMessageList = getMessageHistory(conversationId);
-        if (isDownloadingFile) {
-            return;
-        }
-        if (messageList == null) {
-            messageList = new ArrayList<>();
-        }
-        if (newMessageList != null
-                && !messageList.isEmpty()
-                && newMessageList.size() == messageList.size())
-            return;
-        messageList = newMessageList;
+        messageList = getMessageHistory(conversationId);
         if (messageList != null) {
             StyledDocument document = chatArea.getStyledDocument();
             try {
@@ -287,8 +277,14 @@ public class ChatGui extends JFrame implements ChatEventListener {
             case "online", "offline" -> panel1.updateOnlineList(getContacts());
             case "message" -> {
                 Message newMessage = (Message) data;
-                if (!newMessage.getFrom_number().equals(loginedContact.getPhone_number()))
+                if (!newMessage.getFrom_number().equals(loginedContact.getPhone_number())) {
+                    if (newMessage.getMessage_text().contains("File: ")) {
+                        appendFileMessage(newMessage.getMessage_text());
+                        chatArea.setCaretPosition(chatArea.getDocument().getLength());
+                        return;
+                    }
                     appendMessage(newMessage);
+                }
                 chatArea.setCaretPosition(chatArea.getDocument().getLength());
             }
             default -> {
